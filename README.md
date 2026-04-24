@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Siteglow](.github/siteglow.png)
+![Siteglow](https://github.com/xtrafr/siteglow/blob/main/.github/siteglow.png)
 
 **A high performance technical auditing engine that lives in your browser**
 
