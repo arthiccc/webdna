@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/* Plugins */
+@import "tw-animate-css";
+
+/* Dark Mode */
+@custom-variant dark (&:is(.dark *));
+
+/* Fonts */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/Geist.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "GeistMono";
+  src: url("/fonts/GeistMono.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+  font-style: normal;
+}
+
+@theme {
+  --font-sans:
+    "Geist", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    "GeistMono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace, "Apple Color Emoji";
+
+  --color-neutral-950: #0a0a0a;
+}
+
+@layer base {
+  body {
+    @apply bg-neutral-100 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Shiki light/dark mode */
+html.dark .shiki,
+html.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: transparent !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100 dark:bg-neutral-950;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 transition-colors hover:bg-neutral-400 dark:bg-neutral-800 dark:hover:bg-neutral-700;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
