@@ -238,18 +238,18 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 <svelte:head>
   {#if report}
     <title>{report.name}</title>
-    <meta name="description" content="Website analysis report." />
+    <meta name="description" content="Website analysis tool." />
     
     <!-- OpenGraph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={report.name} />
-    <meta property="og:description" content="Website analysis report." />
+    <meta property="og:description" content="Website analysis tool." />
     <meta property="og:image" content="https://siteglow.xtra.wtf/og-image.png" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:title" content={report.name} />
-    <meta property="twitter:description" content="Website analysis report." />
+    <meta property="twitter:description" content="Website analysis tool." />
     <meta property="twitter:image" content="https://siteglow.xtra.wtf/og-image.png" />
   {:else}
     <title>Inspecting...</title>
