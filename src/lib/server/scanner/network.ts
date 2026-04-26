@@ -25,7 +25,7 @@ export async function fetchDNS(domain: string): Promise<DNSRecord[]> {
   // Node's native 'dns' module often fails or is restricted in serverless runtimes
   const fetchDNSRecords = async (type: string) => {
     try {
-      const res = await fetchWithTimeout(`https://cloudflare-dns.com/query?name=${domain}&type=${type}`, {
+      const res = await fetchWithTimeout(`https://cloudflare-dns.com/dns-query?name=${domain}&type=${type}`, {
         headers: { 'Accept': 'application/dns-json' }
       }, 4000);
       
