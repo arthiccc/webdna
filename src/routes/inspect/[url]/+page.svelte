@@ -394,6 +394,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
       {#if node.type === 'file'}
         <button 
           onclick={() => openAsset(node)}
+          title={node.name}
           class="text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white truncate text-left w-full"
         >
           {node.name}
@@ -575,7 +576,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                     </div>
                     <div class="text-left">
                       <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">Provider</span>
-                      <p class="text-xs font-bold dark:text-white truncate max-w-[100px]">{activeReport.provider || 'Unknown'}</p>
+                      <p class="text-xs font-bold dark:text-white truncate max-w-[100px]" title={activeReport.provider || 'Unknown'}>{activeReport.provider || 'Unknown'}</p>
                     </div>
                   </button>
                   <button 
@@ -611,14 +612,14 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                               <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
                                 <div class="flex flex-col">
                                   <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Heading</span>
-                                  <span class="text-sm font-bold dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[0] || 'Inter'}">{activeReport.fonts?.[0] || 'Inter'}</span>
+                                  <span class="text-sm font-bold dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[0] || 'Inter'}</span>
                                 </div>
                                 <span class="text-xl font-serif dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
                               </div>
                               <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
                                 <div class="flex flex-col">
                                   <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Body</span>
-                                  <span class="text-sm font-medium dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}">{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
+                                  <span class="text-sm font-medium dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
                                 </div>
                                 <span class="text-xl font-sans dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
                               </div>
@@ -640,7 +641,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                               <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter block mb-1">Theme</span>
                               <div class="flex items-center gap-2 h-7 min-w-0">
                                 <div class="h-4 w-4 rounded-full border border-black/10 shadow-sm shrink-0" style="background-color: {activeReport.themeColor || (activeReport.brandColors?.[0] || '#000')}"></div>
-                                <span class="text-xs md:text-sm font-mono font-black dark:text-white uppercase truncate md:overflow-visible md:whitespace-normal leading-none flex-1 min-w-0">
+                                <span class="text-xs md:text-sm font-mono font-black dark:text-white uppercase truncate md:overflow-visible md:whitespace-normal leading-none flex-1 min-w-0" title={activeReport.themeColor || 'None'}>
                                   {activeReport.themeColor || 'None'}
                                 </span>
                               </div>

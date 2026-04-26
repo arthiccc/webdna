@@ -340,16 +340,61 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     }
   });
 
-  // 6. Fonts
+  // 6. Fonts (Extreme Precision Detection)
   const fonts: string[] = [];
-  const fontLinks = $('link[href*="fonts.googleapis.com"]').attr('href');
-  if (fontLinks) {
-    const fontNames = fontLinks.match(/family=([\w\+]+)/g);
+  const foundFonts = new Set<string>();
+  
+  // A. Check Google Fonts (Highest Confidence)
+  $('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]').each((_, el) => {
+    const href = $(el).attr('href') || '';
+    const fontNames = href.match(/family=([\w\+]+)/g);
     if (fontNames) {
-      fonts.push(...fontNames.map(f => f.replace('family=', '').replace(/\+/g, ' ')));
+      fontNames.forEach(f => {
+        const name = f.replace('family=', '').replace(/\+/g, ' ').split(':')[0].split(',')[0];
+        if (name && name.length > 1) foundFonts.add(name);
+      });
     }
-  }
-  if (fonts.length === 0) fonts.push('Inter', 'System Sans');
+  });
+
+  // B. Check Preloaded/Linked Font Files (.woff2, .woff, .ttf)
+  $('[src], link[href]').each((_, el) => {
+    const url = $(el).attr('src') || $(el).attr('href') || '';
+    const fileMatch = url.match(/\/([^\/\s]+)\.(woff2|woff|ttf|otf)(\?.*)?$/i);
+    if (fileMatch) {
+      const fileName = fileMatch[1].replace(/[-_]/g, ' ');
+      // Clean up common suffixes
+      const cleanName = fileName.replace(/(regular|bold|italic|medium|light|thin|variable|subset|webfont)/gi, '').trim();
+      if (cleanName && cleanName.length > 2) {
+        // Capitalize words
+        const capitalized = cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        foundFonts.add(capitalized);
+      }
+    }
+  });
+
+  // C. Deep CSS Scan for font-family & @font-face
+  $('style').each((_, el) => {
+    const styleContent = $(el).html();
+    
+    // Look for @font-face names
+    const fontFaceMatches = styleContent.match(/font-family:\s*["']?([^;,"'}]+)["']?/gi);
+    if (fontFaceMatches) {
+      fontFaceMatches.forEach(match => {
+        const name = match.replace(/font-family:\s*/i, '').replace(/["']/g, '').split(',')[0].trim();
+        const commonSystem = ['inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Impact'];
+        if (name && name.length > 1 && !commonSystem.some(sys => name.toLowerCase().includes(sys.toLowerCase()))) {
+          foundFonts.add(name);
+        }
+      });
+    }
+  });
+
+  // D. Filter and Sort
+  const finalFonts = Array.from(foundFonts)
+    .filter(f => f.length > 2 && f.length < 30)
+    .slice(0, 5);
+
+
 
   // 7. Performance, Accessibility & SEO Audit
   const pageSize = Math.round(new TextEncoder().encode(html).length / 1024);
@@ -421,7 +466,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     favicon,
     logo,
     brandColors: finalColors.length > 0 ? finalColors : ['#000000', '#ffffff'],
-    fonts: Array.from(new Set(fonts)).slice(0, 5),
+    fonts: finalFonts,
     title,
     description,
     ogImage,

@@ -25,15 +25,30 @@ export function analyzeHtml(html: string, finalUrl: string, domain: string): Par
   const h2Count = (html.match(/<h2\b/gi) || []).length;
   const h3Count = (html.match(/<h3\b/gi) || []).length;
 
-  // Extract Fonts (basic detection from stylesheets or @font-face)
+  // Extract Fonts (Enhanced regex detection)
   const fonts: string[] = [];
+  
+  // Google Fonts
   const fontMatches = html.match(/family=([^&"'>\s]+)/g);
   if (fontMatches) {
     fontMatches.forEach(f => {
-      const name = f.replace('family=', '').replace(/\+/g, ' ');
+      const name = f.replace('family=', '').replace(/\+/g, ' ').split(':')[0];
       if (!fonts.includes(name)) fonts.push(name);
     });
   }
+
+  // Generic CSS matches
+  const cssFonts = html.match(/font-family:\s*["']?([^;,"'}]+)["']?/gi);
+  if (cssFonts) {
+    cssFonts.forEach(match => {
+      const name = match.replace(/font-family:\s*/i, '').replace(/["']/g, '').split(',')[0].trim();
+      const commonSystem = ['inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial'];
+      if (name && !fonts.includes(name) && !commonSystem.includes(name)) {
+        fonts.push(name);
+      }
+    });
+  }
+
 
   // Tech Stack
   const techStack: TechStack[] = [];
@@ -78,6 +93,6 @@ export function analyzeHtml(html: string, finalUrl: string, domain: string): Par
     language,
     themeColor,
     headings: { h1: h1Count, h2: h2Count, h3: h3Count },
-    fonts: fonts.length > 0 ? fonts : ['System Default']
+    fonts: fonts.slice(0, 5)
   };
 }
