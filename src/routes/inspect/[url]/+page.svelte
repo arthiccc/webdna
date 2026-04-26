@@ -483,92 +483,92 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                   <!-- Left Column: Branding & Visuals -->
                   <div class="space-y-6 lg:col-span-2">
                     <!-- Design DNA Summary -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-6 flex items-center gap-2">
-                        <Dna size={20} class="text-[#7bc5e4]" />
-                        <h2 class="text-xl font-bold dark:text-white">Design DNA</h2>
+                    <section class="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
+                      <div class="mb-4 flex items-center gap-2 px-1">
+                        <Dna size={18} class="text-[#7bc5e4]" />
+                        <h2 class="text-lg font-bold dark:text-white">Design DNA</h2>
                       </div>
                       
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <!-- Typography & Lang -->
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                           <div>
-                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Typography Pairing</h3>
-                            <div class="space-y-3">
-                              <div class="flex items-center justify-between p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
+                            <h3 class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-2 px-1">Typography</h3>
+                            <div class="space-y-2">
+                              <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
                                 <div class="flex flex-col">
-                                  <span class="text-[9px] text-neutral-400 uppercase font-black tracking-tighter">Heading</span>
-                                  <span class="text-sm font-bold dark:text-white" style="font-family: {activeReport.fonts?.[0] || 'Inter'}">{activeReport.fonts?.[0] || 'Inter'}</span>
+                                  <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Heading</span>
+                                  <span class="text-sm font-bold dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[0] || 'Inter'}">{activeReport.fonts?.[0] || 'Inter'}</span>
                                 </div>
-                                <span class="text-2xl font-serif dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
+                                <span class="text-xl font-serif dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
                               </div>
-                              <div class="flex items-center justify-between p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
+                              <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
                                 <div class="flex flex-col">
-                                  <span class="text-[9px] text-neutral-400 uppercase font-black tracking-tighter">Body</span>
-                                  <span class="text-sm font-medium dark:text-white" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}">{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
+                                  <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Body</span>
+                                  <span class="text-sm font-medium dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}">{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
                                 </div>
-                                <span class="text-2xl font-sans dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
+                                <span class="text-xl font-sans dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
                               </div>
                             </div>
                           </div>
 
-                          <div class="flex gap-4">
-                            <div class="flex-1 p-4 rounded-2xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
-                              <span class="text-[9px] text-neutral-400 uppercase font-black tracking-tighter block mb-2">Language</span>
+                          <div class="flex gap-2">
+                            <div class="flex-1 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
+                              <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter block mb-1">Language</span>
                               <div class="flex items-center gap-2">
-                                <span class="text-xl font-black dark:text-white">{activeReport.language || 'EN'}</span>
-                                <span class="text-[10px] font-medium text-neutral-500">{activeReport.language ? new Intl.DisplayNames(['en'], { type: 'language' }).of(activeReport.language) : 'English'}</span>
+                                <span class="text-lg font-black dark:text-white">{activeReport.language || 'EN'}</span>
+                                <span class="text-[9px] font-medium text-neutral-500">{activeReport.language ? new Intl.DisplayNames(['en'], { type: 'language' }).of(activeReport.language) : 'English'}</span>
                               </div>
                             </div>
                             <div 
-                              class="flex-1 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 transition-all duration-500"
+                              class="flex-1 px-3 py-2 rounded-xl border border-neutral-100 dark:border-neutral-800 transition-all duration-500"
                               style="background-color: #7bc5e41a; border-color: #7bc5e433"
                             >
-                              <span class="text-[9px] text-neutral-400 uppercase font-black tracking-tighter block mb-2">Theme Color</span>
-                              <div class="flex items-center gap-2">
-                                <div class="h-5 w-5 rounded-full border border-black/10 shadow-sm" style="background-color: {activeReport.themeColor || (activeReport.brandColors?.[0] || '#000')}"></div>
-                                <span class="text-xs font-mono font-bold dark:text-white uppercase">{activeReport.themeColor || 'None'}</span>
+                              <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter block mb-1">Theme</span>
+                              <div class="flex items-center gap-2 h-7">
+                                <div class="h-4 w-4 rounded-full border border-black/10 shadow-sm shrink-0" style="background-color: {activeReport.themeColor || (activeReport.brandColors?.[0] || '#000')}"></div>
+                                <span class="text-sm font-mono font-black dark:text-white uppercase truncate leading-none">{activeReport.themeColor || 'None'}</span>
                               </div>
                             </div>
                           </div>
                         </div>
 
                         <!-- Hierarchy & Social -->
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                           <div>
-                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Heading Hierarchy</h3>
+                            <h3 class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-2 px-1">Hierarchy</h3>
                             <div class="grid grid-cols-3 gap-2">
-                              <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
-                                <span class="text-[9px] text-neutral-400 uppercase font-bold block">H1</span>
+                              <div class="px-2 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
+                                <span class="text-[8px] text-neutral-400 uppercase font-bold block">H1</span>
                                 <span class="text-lg font-bold dark:text-white">{activeReport.headings?.h1 ?? 0}</span>
                               </div>
-                              <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
-                                <span class="text-[9px] text-neutral-400 uppercase font-bold block">H2</span>
+                              <div class="px-2 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
+                                <span class="text-[8px] text-neutral-400 uppercase font-bold block">H2</span>
                                 <span class="text-lg font-bold dark:text-white">{activeReport.headings?.h2 ?? 0}</span>
                               </div>
-                              <div class="p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
-                                <span class="text-[9px] text-neutral-400 uppercase font-bold block">H3</span>
+                              <div class="px-2 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
+                                <span class="text-[8px] text-neutral-400 uppercase font-bold block">H3</span>
                                 <span class="text-lg font-bold dark:text-white">{activeReport.headings?.h3 ?? 0}</span>
                               </div>
                             </div>
                           </div>
 
                           <div>
-                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">Social Intelligence</h3>
-                            <div class="flex flex-wrap gap-2">
+                            <h3 class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-2 px-1">Socials</h3>
+                            <div class="flex flex-wrap gap-1.5">
                               {#if activeReport.socialLinks.length > 0}
                                 {#each activeReport.socialLinks as social}
                                   <a 
                                     href={social.url} 
                                     target="_blank" 
-                                    class="flex items-center gap-2 p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
+                                    class="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
                                   >
-                                    <span class="text-xs font-medium dark:text-white">{social.platform}</span>
-                                    <ExternalLinkIcon size={12} class="text-neutral-400" />
+                                    <span class="text-[10px] font-bold dark:text-white">{social.platform}</span>
+                                    <ExternalLinkIcon size={10} class="text-neutral-400" />
                                   </a>
                                 {/each}
                               {:else}
-                                <div class="text-xs text-neutral-500 py-2 italic">No social links detected.</div>
+                                <div class="text-[10px] text-neutral-500 py-1 px-1 italic">None detected.</div>
                               {/if}
                             </div>
                           </div>
@@ -595,12 +595,12 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                             class="group relative flex items-center gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-2 transition-all hover:bg-neutral-100 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
                           >
                             <div 
-                              class="h-8 w-8 rounded-lg border border-black/5 shadow-inner dark:border-white/10" 
+                              class="h-8 w-8 rounded-lg border border-black/5 shadow-inner dark:border-white/10 shrink-0" 
                               style="background-color: {color}"
                             ></div>
-                            <div class="flex flex-col items-start pr-2">
+                            <div class="flex flex-col items-start pr-2 justify-center">
                               <span class="text-[8px] font-black uppercase text-neutral-400 leading-none mb-1">HEX</span>
-                              <span class="font-mono text-xs font-bold text-neutral-600 group-hover:text-neutral-900 dark:group-hover:text-white">
+                              <span class="font-mono text-sm font-black text-neutral-600 group-hover:text-neutral-900 dark:group-hover:text-white leading-none">
                                 {color}
                               </span>
                             </div>

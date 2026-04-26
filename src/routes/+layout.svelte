@@ -6,11 +6,11 @@
   import Header from "$lib/components/layout/Header.svelte";
   import Sidebar from "$lib/components/layout/Sidebar.svelte";
 
-  let { children } = $props();
+  let { children, data } = $props();
 </script>
 
 <svelte:head>
-  {#if !dev}
+  {#if !dev && !data.isBot}
     <script defer src="/stats/script.js" data-website-id="0a8cf48d-1fe0-45ad-8ffb-326c95da9e3f" data-host-url="/stats"></script>
   {/if}
 </svelte:head>
