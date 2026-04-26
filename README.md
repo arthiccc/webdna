@@ -2,58 +2,81 @@
 
 <div align="center">
 
-![Siteglow](https://github.com/xtrafr/siteglow/blob/main/.github/siteglow.png)
+![WebDNA](https://github.com/xtrafr/webdna/blob/main/.github/webdna.png)
 
-**A high performance technical auditing engine that lives in your browser**
+**A high-performance technical auditing engine that lives in your browser**
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/?repo=siteglow)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/?repo=xtrafr/webdna)
 
 </div>
 
 ---
 
-## Features
+## 🧬 Features
 
-- **Where it's hosted** - Instantly find the IP address, server location, and hosting provider
-- **Security check** - Real time audit of SSL certificates, security headers, and domain safety
-- **Asset Explorer** - IDE style file explorer to browse a site's images, scripts, and styles
-- **Subdomains** - Automatic mapping of the digital ecosystem surrounding any domain
-- **Email Protection** - Detection of SPF and DMARC configurations to prevent spoofing
-- **Beautiful UI** - Minimalist, high density dashboard with smooth animations
+- **Design DNA** - Automatic extraction of brand colors and precise typography analysis.
+- **Infrastructure** - Instantly find the IP address, server location, and hosting provider.
+- **Asset Explorer** - IDE-style file explorer to browse a site's images, scripts, and styles.
+- **Security Audit** - Real-time audit of SSL certificates, security headers, and domain safety.
+- **Subdomains** - Automatic mapping of the digital ecosystem surrounding any domain.
+- **Email Protection** - Detection of SPF and DMARC configurations to prevent spoofing.
+- **Beautiful UI** - Minimalist, high-density dashboard with smooth animations.
 
-## Quick Start
+## 🚀 Quick Start
 
-### Use it now
-Start the project locally and enter any URL to begin your audit.
-
-### Clone locally
+### 1. Clone locally
 ```bash
 git clone https://github.com/xtrafr/webdna.git
 cd webdna
 npm install
 ```
 
-Set up your environment variables:
-1. Create a `.env` file in the root directory.
-2. Add your free [ScrapingAnt](https://scrapingant.com/) API key (10,000 free requests/month) to bypass Cloudflare protection:
-   ```env
-   SCRAPINGANT_API_KEY="your_api_key_here"
-   ```
+### 2. Environment Variables
+Create a `.env` file in the root directory and add your [ScrapingAnt](https://scrapingant.com/) API key to bypass WAFs:
+```env
+SCRAPINGANT_API_KEY="your_api_key_here"
+```
 
-Run the development server:
+### 3. Development
 ```bash
 npm run dev
 ```
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Framework**: SvelteKit 5 (Fast and modern)
-- **Styling**: Tailwind CSS (Clean and responsive)
-- **Logic**: Node.js + Cheerio (High speed site parsing)
-- **Proxy**: ScrapingAnt API (Free Cloudflare/WAF bypass)
-- **Icons**: Lucide Svelte (Technical and precise)
+- **Framework**: SvelteKit 5 (Runes)
+- **Styling**: Tailwind CSS
+- **Parsing**: Cheerio + Custom Network Probes
+- **Proxy**: ScrapingAnt API (WAF bypass)
+- **Icons**: Lucide Svelte
 
-## Project Structure
+## 🔌 API Reference
+
+<details>
+<summary><b>Analyze Endpoint</b> (Internal)</summary>
+
+### `GET /inspect/[url]`
+The primary entry point for website analysis. It streams the data using SvelteKit's `streamed` data pattern.
+
+**Parameters:**
+- `url`: The encoded URL to analyze (e.g., `https%3A%2F%2Fgoogle.com`)
+
+**Response:**
+Returns a `report` object containing:
+- `branding`: Logos, favicons, and primary colors.
+- `typography`: Detected font families and weights.
+- `infrastructure`: IP, Provider, and ASN details.
+- `assets`: Full tree of scripts, styles, and images.
+</details>
+
+<details>
+<summary><b>Asset Proxy</b></summary>
+
+### `GET /api/proxy-asset?url=[url]`
+A security-first proxy to fetch and preview remote assets (CSS/JS) without CORS issues.
+</details>
+
+## 📁 Project Structure
 
 ```
 webdna/
@@ -63,24 +86,17 @@ webdna/
 │   │   ├── components/  # Reusable UI modules
 │   │   └── stores/      # App state and history management
 │   └── routes/          # Inspection pages and streaming data
-├── static/              # Fonts and global assets
+├── static/              # Favicon, OG images, and global assets
 ├── package.json         # Project dependencies
 └── README.md            # This file
 ```
 
-## Why WebDNA?
-
-- **Privacy first** - Audits are performed on your terms
-- **Instant** - No loading time, no complex setup
-- **Deep Intelligence** - See the tech stack and file system of any target
-- **Actionable** - Export colors as CSS or copy technical data in one click
-
-## License
+## ⚖️ License
 
 MIT © [Xtra](https://github.com/xtrafr)
 
 ---
 
 <div align="center">
-Made with love by <a href="https://github.com/xtrafr">Xtra</a>
+Made with 🧬 by <a href="https://github.com/xtrafr">Xtra</a>
 </div>
