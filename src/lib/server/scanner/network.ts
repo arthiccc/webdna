@@ -1,37 +1,63 @@
-import dns from 'dns/promises';
 import tls from 'tls';
 import type { DNSRecord, SSLCertificate, SecurityHeader } from '../../types';
 
+// Helper for fetch with timeout
+async function fetchWithTimeout(url: string, options: any = {}, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
 export async function fetchDNS(domain: string): Promise<DNSRecord[]> {
   const records: DNSRecord[] = [];
-  const types: (keyof typeof dns)[] = ['resolveA', 'resolveMx', 'resolveTxt', 'resolveNs'];
   
-  const results = await Promise.allSettled([
-    dns.resolve4(domain),
-    dns.resolveMx(domain),
-    dns.resolveTxt(domain),
-    dns.resolveNs(domain)
+  // Use Cloudflare DNS-over-HTTPS API for better reliability in serverless environments
+  // Node's native 'dns' module often fails or is restricted in serverless runtimes
+  const fetchDNSRecords = async (type: string) => {
+    try {
+      const res = await fetchWithTimeout(`https://cloudflare-dns.com/query?name=${domain}&type=${type}`, {
+        headers: { 'Accept': 'application/dns-json' }
+      }, 4000);
+      
+      if (!res.ok) return [];
+      const data = await res.json();
+      if (!data.Answer) return [];
+      
+      return data.Answer.map((ans: any) => ({
+        type,
+        value: ans.data.replace(/"/g, '') // Clean up TXT records
+      }));
+    } catch (err) {
+      console.error(`DNS fetch error for ${type}:`, err);
+      return [];
+    }
+  };
+
+  const [a, mx, txt, ns] = await Promise.all([
+    fetchDNSRecords('A'),
+    fetchDNSRecords('MX'),
+    fetchDNSRecords('TXT'),
+    fetchDNSRecords('NS')
   ]);
 
-  if (results[0].status === 'fulfilled') {
-    results[0].value.forEach(ip => records.push({ type: 'A', value: ip }));
-  }
-  if (results[1].status === 'fulfilled') {
-    results[1].value.forEach(mx => records.push({ type: 'MX', value: `${mx.exchange} (${mx.priority})` }));
-  }
-  if (results[2].status === 'fulfilled') {
-    results[2].value.forEach(txt => records.push({ type: 'TXT', value: txt.join(' ') }));
-  }
-  if (results[3].status === 'fulfilled') {
-    results[3].value.forEach(ns => records.push({ type: 'NS', value: ns }));
-  }
-
-  return records;
+  return [...a, ...mx, ...txt, ...ns];
 }
 
 export async function fetchSSL(domain: string): Promise<SSLCertificate | undefined> {
   return new Promise((resolve) => {
     try {
+      // tls.connect is generally supported in Vercel Serverless (Node) functions
+      // but might fail in Edge functions.
       const socket = tls.connect({
         host: domain,
         port: 443,
@@ -56,15 +82,20 @@ export async function fetchSSL(domain: string): Promise<SSLCertificate | undefin
           isExpired,
           sans: cert.subjectaltname ? cert.subjectaltname.split(',').map(s => s.trim().replace('DNS:', '')) : []
         });
-        socket.end();
+        socket.destroy();
       });
 
-      socket.on('error', () => resolve(undefined));
-      socket.setTimeout(5000, () => {
+      socket.on('error', (err) => {
+        console.error('SSL socket error:', err);
+        resolve(undefined);
+      });
+      
+      socket.setTimeout(4000, () => {
         socket.destroy();
         resolve(undefined);
       });
-    } catch {
+    } catch (err) {
+      console.error('SSL connection error:', err);
       resolve(undefined);
     }
   });
@@ -94,13 +125,16 @@ export function analyzeHeaders(headers: Headers): SecurityHeader[] {
 
 export async function fetchIPInfo(ip: string): Promise<{ provider: string, location: string }> {
   try {
-    const res = await fetch(`http://ip-api.com/json/${ip}`);
+    // Using ipapi.co as it supports HTTPS for free and is generally reliable
+    const res = await fetchWithTimeout(`https://ipapi.co/${ip}/json/`, {}, 4000);
+    if (!res.ok) throw new Error('IP API returned error');
     const data = await res.json();
     return {
-      provider: data.isp || data.org || 'Unknown Provider',
-      location: data.city && data.country ? `${data.city}, ${data.country}` : 'Unknown Location'
+      provider: data.org || data.asn || 'Unknown Provider',
+      location: data.city && data.country_name ? `${data.city}, ${data.country_name}` : 'Unknown Location'
     };
-  } catch {
+  } catch (err) {
+    console.error('IP Info fetch error:', err);
     return { provider: 'Unknown Provider', location: 'Unknown Location' };
   }
 }

@@ -33,6 +33,17 @@ Start the project locally and enter any URL to begin your audit.
 git clone https://github.com/xtrafr/siteglow.git
 cd siteglow
 npm install
+```
+
+Set up your environment variables:
+1. Create a `.env` file in the root directory.
+2. Add your free [ScrapingAnt](https://scrapingant.com/) API key (10,000 free requests/month) to bypass Cloudflare protection:
+   ```env
+   SCRAPINGANT_API_KEY="your_api_key_here"
+   ```
+
+Run the development server:
+```bash
 npm run dev
 ```
 
@@ -41,6 +52,7 @@ npm run dev
 - **Framework**: SvelteKit 5 (Fast and modern)
 - **Styling**: Tailwind CSS (Clean and responsive)
 - **Logic**: Node.js + Cheerio (High speed site parsing)
+- **Proxy**: ScrapingAnt API (Free Cloudflare/WAF bypass)
 - **Icons**: Lucide Svelte (Technical and precise)
 
 ## Project Structure

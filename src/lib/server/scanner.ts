@@ -1,6 +1,47 @@
 import * as cheerio from 'cheerio';
-import type { SiteReport, TechStack, SocialLink } from '../types';
+import type { SiteReport, TechStack, SocialLink, RedFlag, Subdomain, AssetNode } from '../types';
 import { fetchDNS, fetchSSL, analyzeHeaders, fetchIPInfo } from './scanner/network';
+import { analyzeHtml } from '../scanner/analysis';
+import { env } from '$env/dynamic/private';
+
+// Helper for fetch with timeout to prevent serverless function hangs
+async function fetchWithTimeout(url: string, options: any = {}, timeout = 10000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (e) {
+    clearTimeout(id);
+    throw e;
+  }
+}
+
+export async function getNetworkOnlyReport(domain: string): Promise<Partial<SiteReport>> {
+  const [dnsRecords, sslCert] = await Promise.all([
+    fetchDNS(domain).catch(() => []),
+    fetchSSL(domain).catch(() => undefined),
+  ]);
+
+  const firstA = dnsRecords.find(r => r.type === 'A')?.value;
+  const ipInfo = firstA ? await fetchIPInfo(firstA) : { provider: 'Unknown', location: 'Unknown' };
+
+  return {
+    dns: dnsRecords,
+    ssl: sslCert,
+    ip: firstA,
+    provider: ipInfo.provider,
+    location: ipInfo.location,
+    emailSecurity: {
+      spf: dnsRecords.some(r => r.type === 'TXT' && r.value.includes('v=spf1')),
+      dmarc: dnsRecords.some(r => r.type === 'TXT' && r.value.includes('v=DMARC1'))
+    },
+  };
+}
 
 export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   // Ensure protocol
@@ -9,19 +50,75 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   }
 
   const headersMap = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9'
+    'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'X-Forwarded-For': '66.249.66.1', // Googlebot IP range hint
+    'Cache-Control': 'no-cache'
   };
 
-  let response = await fetch(targetUrl, { headers: headersMap, redirect: 'follow' });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${targetUrl}: ${response.statusText} (${response.status})`);
+  let response;
+  try {
+    console.log(`[scanner.ts] Attempting initial fetch to ${targetUrl}`);
+    response = await fetchWithTimeout(targetUrl, { headers: headersMap, redirect: 'follow' }, 8000);
+    console.log(`[scanner.ts] Initial fetch completed. Status: ${response.status}`);
+  } catch (err: any) {
+    console.error(`[scanner.ts] Initial fetch threw an error:`, err);
+    throw new Error(`Connection timed out or failed: ${err.message}`);
   }
 
-  let html = await response.text();
+  let html = '';
+  let finalUrl = targetUrl;
+
+  if (!response.ok) {
+    console.log(`[scanner.ts] Response not ok: ${response.status} ${response.statusText}`);
+    if (response.status === 403 || response.status === 503) {
+      console.log(`[scanner.ts] Cloudflare/WAF block detected for ${targetUrl}. Attempting fallback via ScrapingAnt...`);
+      try {
+        const apiKey = env.SCRAPINGANT_API_KEY;
+        if (!apiKey) {
+           console.error("[scanner.ts] SCRAPINGANT_API_KEY is missing!");
+           throw new Error("SCRAPINGANT_API_KEY environment variable is not set. Cannot bypass Cloudflare.");
+        }
+        
+        // Added browser=false to make the fetch 10x faster (bypasses headless Chrome, just uses proxy network)
+        const proxyUrl = `https://api.scrapingant.com/v2/general?url=${encodeURIComponent(targetUrl)}&x-api-key=${apiKey}&browser=false`;
+        console.log(`[scanner.ts] Fetching from ScrapingAnt...`);
+        let proxyResponse = await fetchWithTimeout(proxyUrl, {}, 15000);
+        console.log(`[scanner.ts] ScrapingAnt responded with status: ${proxyResponse.status}`);
+        
+        let proxyText = await proxyResponse.text();
+
+        // Handle 409 Concurrency Limit (Free tier only allows 1 request at a time)
+        if (proxyResponse.status === 409) {
+           console.log(`[scanner.ts] Hit ScrapingAnt concurrency limit (409). Waiting 2.5s and retrying...`);
+           await new Promise(resolve => setTimeout(resolve, 2500));
+           proxyResponse = await fetchWithTimeout(proxyUrl, {}, 15000);
+           proxyText = await proxyResponse.text();
+           console.log(`[scanner.ts] ScrapingAnt retry status: ${proxyResponse.status}`);
+        }
+        
+        if (!proxyResponse.ok) {
+           console.error(`[scanner.ts] ScrapingAnt API error response:`, proxyText);
+           throw new Error(`ScrapingAnt API failed: ${proxyResponse.status} ${proxyText}`);
+        }
+        
+        html = proxyText;
+        if (!html) throw new Error("Empty response from ScrapingAnt");
+      } catch (proxyErr: any) {
+        console.error(`[scanner.ts] ScrapingAnt fallback failed:`, proxyErr);
+        throw new Error(`The target website blocked our crawler, and the ScrapingAnt fallback failed. (${proxyErr.message})`);
+      }
+    } else {
+      throw new Error(`Site returned ${response.status}: ${response.statusText}`);
+    }
+  } else {
+    html = await response.text();
+    finalUrl = response.url;
+  }
+
+  console.log(`[scanner.ts] HTML fetched successfully. Length: ${html.length}`);
   let $ = cheerio.load(html);
-  let finalUrl = response.url;
 
   // Detect Meta Refresh redirect
   const metaRefresh = $('meta[http-equiv="refresh"]').attr('content');
@@ -29,11 +126,15 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     const match = metaRefresh.match(/url=(.+)$/i);
     if (match && match[1]) {
       const redirectUrl = new URL(match[1].trim(), finalUrl).href;
-      response = await fetch(redirectUrl, { headers: headersMap, redirect: 'follow' });
-      if (response.ok) {
-        finalUrl = response.url;
-        html = await response.text();
-        $ = cheerio.load(html);
+      try {
+        response = await fetchWithTimeout(redirectUrl, { headers: headersMap, redirect: 'follow' }, 5000);
+        if (response.ok) {
+          finalUrl = response.url;
+          html = await response.text();
+          $ = cheerio.load(html);
+        }
+      } catch (err) {
+        console.error('Meta refresh fetch failed:', err);
       }
     }
   }
@@ -199,7 +300,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   if (fonts.length === 0) fonts.push('Inter', 'System Sans');
 
   // 7. Performance, Accessibility & SEO Audit
-  const pageSize = Math.round(Buffer.byteLength(html) / 1024);
+  const pageSize = Math.round(new TextEncoder().encode(html).length / 1024);
   const domNodes = $('*').length;
   const compression = response.headers.get('content-encoding') || 'None';
   
@@ -348,6 +449,10 @@ function buildAssetTree($: cheerio.CheerioAPI, baseUrl: string): any[] {
         currentLevel.push(existing);
       }
       if (!isLast) {
+        if (!existing.children) {
+          existing.children = [];
+          existing.type = 'folder';
+        }
         currentLevel = existing.children;
       }
     });
@@ -383,7 +488,7 @@ async function discoverCrawling(domain: string, baseUrl: string): Promise<{ site
   
   try {
     const robotsUrl = `https://${domain}/robots.txt`;
-    const res = await fetch(robotsUrl);
+    const res = await fetchWithTimeout(robotsUrl, {}, 3000);
     if (res.ok) {
       results.robots = robotsUrl;
       const text = await res.text();
@@ -393,7 +498,7 @@ async function discoverCrawling(domain: string, baseUrl: string): Promise<{ site
     
     if (!results.sitemap) {
       const sitemapUrl = `https://${domain}/sitemap.xml`;
-      const sRes = await fetch(sitemapUrl);
+      const sRes = await fetchWithTimeout(sitemapUrl, {}, 3000);
       if (sRes.ok) results.sitemap = sitemapUrl;
     }
   } catch { /* ignore */ }
