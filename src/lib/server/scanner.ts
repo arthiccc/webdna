@@ -45,6 +45,8 @@ export async function getNetworkOnlyReport(domain: string): Promise<Partial<Site
     ip: firstA,
     provider: ipInfo.provider,
     location: ipInfo.location,
+    latitude: ipInfo.latitude,
+    longitude: ipInfo.longitude,
     emailSecurity: {
       spf: dnsRecords.some(r => r.type === 'TXT' && r.value.includes('v=spf1')),
       dmarc: dnsRecords.some(r => r.type === 'TXT' && r.value.includes('v=DMARC1'))
@@ -418,6 +420,8 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     ip: firstA,
     provider: ipInfo.provider,
     location: ipInfo.location,
+    latitude: ipInfo.latitude,
+    longitude: ipInfo.longitude,
     ssl: sslCert,
     security: securityHeaders,
     securityScore: calculateSecurityScore(sslCert, securityHeaders, mixedContent, dnsRecords),

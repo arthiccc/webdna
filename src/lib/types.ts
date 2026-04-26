@@ -81,6 +81,8 @@ export interface SiteReport {
   ip?: string;
   provider?: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   ssl?: SSLCertificate;
   security: SecurityHeader[];
   securityScore: string;

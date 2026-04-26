@@ -9,11 +9,12 @@
   import { Button } from '$lib/components/ui/button';
   import { Separator } from '$lib/components/ui/separator';
   import { toast } from 'svelte-sonner';
-  import { Copy as CopyIcon, ExternalLink as ExternalLinkIcon, Palette as PaletteIcon, Type as TypeIcon, Info as InfoIcon, Layers as LayersIcon, Share as ShareIcon, Download as DownloadIcon, Code as CodeIcon, Star as StarIcon, Globe, ShieldCheck, Lock as LockIcon, Activity as ActivityIcon, Map as MapIcon, AlertCircle, Server, MapPin, Zap, Gauge, Folder, File, ChevronRight, ChevronDown, FileImage, FileCode, Mail, Bot, FileText, Fingerprint, Dna, Loader2 } from "@lucide/svelte";
+  import { Copy as CopyIcon, ExternalLink as ExternalLinkIcon, Palette as PaletteIcon, Type as TypeIcon, Info as InfoIcon, Layers as LayersIcon, Share as ShareIcon, Download as DownloadIcon, Code as CodeIcon, Star as StarIcon, Globe, ShieldCheck, Lock as LockIcon, Activity as ActivityIcon, Map as MapIcon, AlertCircle, Server, MapPin, Zap, Gauge, Folder, File, ChevronRight, ChevronDown, FileImage, FileCode, Mail, Bot, FileText, Fingerprint, Dna, Loader2, X as CloseIcon } from "@lucide/svelte";
   import { analyzeHtml } from '$lib/scanner/analysis';
 
   let { data } = $props<{ data: PageData }>();
   let showFullDesc = $state(false);
+  let isMapOpen = $state(false);
   let clientReport = $state<any>(null);
   let clientError = $state<string | null>(null);
   let isScanningClient = $state(false);
@@ -472,15 +473,18 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <p class="text-xs font-bold dark:text-white truncate max-w-[100px]">{activeReport.provider || 'Unknown'}</p>
                     </div>
                   </div>
-                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
-                      <MapPin size={14} class="text-neutral-500" />
+                  <button 
+                    onclick={() => isMapOpen = true}
+                    class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
+                  >
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0 group-hover:scale-110 transition-transform">
+                      <MapPin size={14} class="text-[#7bc5e4]" />
                     </div>
-                    <div>
+                    <div class="text-left">
                       <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">Location</span>
                       <p class="text-xs font-bold dark:text-white">{activeReport.location || 'Unknown'}</p>
                     </div>
-                  </div>
+                  </button>
                 </div>
 
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -1066,4 +1070,50 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
       </div>
     </div>
   {/await}
+{/if}
+
+{#if isMapOpen && (report?.latitude || report?.location)}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" transition:fade={{ duration: 150 }} onclick={() => isMapOpen = false}>
+    <div class="w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-none overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800" onclick={(e) => e.stopPropagation()} transition:fly={{ y: 10, duration: 150 }}>
+      <div class="p-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <MapPin size={16} class="text-[#7bc5e4]" />
+          <span class="text-xs font-black tracking-tight dark:text-white uppercase">Server Location</span>
+        </div>
+        <button onclick={() => isMapOpen = false} class="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+          <CloseIcon size={16} class="text-neutral-500" />
+        </button>
+      </div>
+      <div class="aspect-video w-full bg-neutral-100 dark:bg-neutral-800 relative">
+        {#if report?.latitude && report?.longitude}
+          <iframe
+            title="Map"
+            width="100%"
+            height="100%"
+            frameborder="0"
+            src="https://www.openstreetmap.org/export/embed.html?bbox={report.longitude-0.1},{report.latitude-0.1},{report.longitude+0.1},{report.latitude+0.1}&layer=mapnik&marker={report.latitude},{report.longitude}"
+            class="opacity-100"
+          ></iframe>
+        {:else}
+          <div class="absolute inset-0 flex items-center justify-center flex-col gap-2">
+            <Globe size={32} class="text-neutral-300 animate-pulse" />
+            <p class="text-xs font-bold text-neutral-400">Map unavailable</p>
+          </div>
+        {/if}
+      </div>
+      <div class="p-3 bg-neutral-50 dark:bg-neutral-950/50 flex items-center justify-between gap-4">
+        <div class="min-w-0">
+          <span class="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-0.5">Location</span>
+          <p class="text-xs font-bold text-neutral-700 dark:text-neutral-300 truncate">{report?.location || 'Unknown Location'}</p>
+        </div>
+        <a 
+          href="https://www.openstreetmap.org/search?query={encodeURIComponent(report?.location || '')}" 
+          target="_blank" 
+          class="h-8 w-8 flex items-center justify-center text-neutral-500 hover:text-[#7bc5e4] transition-colors shrink-0"
+        >
+          <ExternalLinkIcon size={18} />
+        </a>
+      </div>
+    </div>
+  </div>
 {/if}
