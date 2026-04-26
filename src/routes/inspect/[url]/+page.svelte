@@ -443,8 +443,8 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       variant="default" 
                       size="sm" 
                       onclick={() => copyToClipboard(window.location.href, 'Report URL')}
-                      style="background-color: #7bc5e4; color: white; border: none;"
-                      class="flex-1 md:flex-none shadow-lg shadow-[#7bc5e4]/20 transition-transform active:scale-95 hover:brightness-105 h-10 md:h-8 px-6"
+                      style="background-color: #1e3a8a; color: white; border: none;"
+                      class="flex-1 md:flex-none shadow-lg shadow-[#1e3a8a]/20 transition-transform active:scale-95 hover:brightness-105 h-10 md:h-8 px-6"
                     >
                       <ShareIcon size={14} />
                       Share
@@ -525,13 +525,15 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                               </div>
                             </div>
                             <div 
-                              class="flex-1 px-3 py-2 rounded-xl border border-neutral-100 dark:border-neutral-800 transition-all duration-500"
+                              class="flex-1 px-3 py-2 rounded-xl border border-neutral-100 dark:border-neutral-800 transition-all duration-500 min-w-0 md:min-w-max"
                               style="background-color: #7bc5e41a; border-color: #7bc5e433"
                             >
                               <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter block mb-1">Theme</span>
-                              <div class="flex items-center gap-2 h-7">
+                              <div class="flex items-center gap-2 h-7 min-w-0">
                                 <div class="h-4 w-4 rounded-full border border-black/10 shadow-sm shrink-0" style="background-color: {activeReport.themeColor || (activeReport.brandColors?.[0] || '#000')}"></div>
-                                <span class="text-sm font-mono font-black dark:text-white uppercase truncate leading-none">{activeReport.themeColor || 'None'}</span>
+                                <span class="text-xs md:text-sm font-mono font-black dark:text-white uppercase truncate md:overflow-visible md:whitespace-normal leading-none flex-1 min-w-0">
+                                  {activeReport.themeColor || 'None'}
+                                </span>
                               </div>
                             </div>
                           </div>
