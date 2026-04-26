@@ -11,10 +11,12 @@
   import { toast } from 'svelte-sonner';
   import { Copy as CopyIcon, ExternalLink as ExternalLinkIcon, Palette as PaletteIcon, Type as TypeIcon, Info as InfoIcon, Layers as LayersIcon, Share as ShareIcon, Download as DownloadIcon, Code as CodeIcon, Star as StarIcon, Globe, ShieldCheck, Lock as LockIcon, Activity as ActivityIcon, Map as MapIcon, AlertCircle, Server, MapPin, Zap, Gauge, Folder, File, ChevronRight, ChevronDown, FileImage, FileCode, Mail, Bot, FileText, Fingerprint, Dna, Loader2, X as CloseIcon } from "@lucide/svelte";
   import { analyzeHtml } from '$lib/scanner/analysis';
+  import { findProvider } from '$lib/data/providers';
 
   let { data } = $props<{ data: PageData }>();
   let showFullDesc = $state(false);
   let isMapOpen = $state(false);
+  let isProviderModalOpen = $state(false);
   let clientReport = $state<any>(null);
   let clientError = $state<string | null>(null);
   let isScanningClient = $state(false);
@@ -101,7 +103,7 @@
   
   // Scroll lock effect
   $effect(() => {
-    if (isMapOpen || selectedAsset || showFullDesc) {
+    if (isMapOpen || selectedAsset || showFullDesc || isProviderModalOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -564,20 +566,23 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <p class="text-xs font-mono font-bold dark:text-white">{activeReport.ip || 'Unknown'}</p>
                     </div>
                   </div>
-                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0">
+                  <button 
+                    onclick={() => isProviderModalOpen = true}
+                    class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
+                  >
                     <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
-                      <Server size={14} class="text-neutral-500" />
+                      <Server size={14} class="text-[#7bc5e4]" />
                     </div>
-                    <div>
+                    <div class="text-left">
                       <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">Provider</span>
                       <p class="text-xs font-bold dark:text-white truncate max-w-[100px]">{activeReport.provider || 'Unknown'}</p>
                     </div>
-                  </div>
+                  </button>
                   <button 
                     onclick={() => isMapOpen = true}
                     class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
                   >
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0 group-hover:scale-110 transition-transform">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
                       <MapPin size={14} class="text-[#7bc5e4]" />
                     </div>
                     <div class="text-left">
@@ -1270,6 +1275,74 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
         >
           Copy URL
         </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if isProviderModalOpen && report?.provider}
+  {@const provider = findProvider(report.provider)}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" transition:fade={{ duration: 150 }} onclick={() => isProviderModalOpen = false}>
+    <div class="w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-none overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800" onclick={(e) => e.stopPropagation()} transition:fly={{ y: 10, duration: 150 }}>
+      <div class="p-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded bg-[#7bc5e41a] flex items-center justify-center">
+            <Server size={20} class="text-[#7bc5e4]" />
+          </div>
+          <div class="flex flex-col">
+            <h3 class="font-black tracking-tight dark:text-white uppercase text-sm">Infrastructure Details</h3>
+            <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Network Analysis</span>
+          </div>
+        </div>
+        <button onclick={() => isProviderModalOpen = false} class="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+          <CloseIcon size={18} class="text-neutral-500" />
+        </button>
+      </div>
+
+      <div class="p-8 bg-white dark:bg-neutral-900">
+        <div class="flex flex-col md:flex-row gap-8 items-start">
+          <div class="flex-1 space-y-6">
+            <div>
+              <div class="flex items-center gap-3 mb-2">
+                <h4 class="text-2xl font-black dark:text-white tracking-tighter">{provider?.name || report.provider}</h4>
+                {#if provider}
+                  <span class="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[9px] font-black uppercase text-neutral-500 tracking-widest">{provider.category}</span>
+                {/if}
+              </div>
+              <p class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400 font-medium">
+                {provider?.description || "This infrastructure provider is responsible for hosting and routing the website's data. Our analysis indicates they manage the IP range associated with this server."}
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
+                <span class="text-[9px] font-black uppercase text-neutral-400 block mb-1">Entity Name</span>
+                <span class="text-xs font-bold dark:text-white">{report.provider}</span>
+              </div>
+              <div class="p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
+                <span class="text-[9px] font-black uppercase text-neutral-400 block mb-1">Server IP</span>
+                <span class="text-xs font-bold dark:text-white font-mono">{report.ip}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-neutral-50 dark:bg-neutral-950/50 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <ShieldCheck size={14} class="text-green-500" />
+          <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Verified Infrastructure</span>
+        </div>
+        {#if provider}
+          <a 
+            href={provider.website} 
+            target="_blank" 
+            class="inline-flex items-center gap-2 px-4 py-2 bg-[#7bc5e4] text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#7bc5e4]/20"
+          >
+            Visit Website
+            <ExternalLinkIcon size={12} />
+          </a>
+        {/if}
       </div>
     </div>
   </div>
