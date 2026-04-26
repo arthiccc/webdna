@@ -8,6 +8,7 @@
   import { Badge } from '$lib/components/ui/badge';
   import { Button } from '$lib/components/ui/button';
   import { Separator } from '$lib/components/ui/separator';
+  // Vercel Build Trigger: 2026-04-26T20:13
   import { toast } from 'svelte-sonner';
   import { Copy as CopyIcon, ExternalLink as ExternalLinkIcon, Palette as PaletteIcon, Type as TypeIcon, Info as InfoIcon, Layers as LayersIcon, Share as ShareIcon, Download as DownloadIcon, Code as CodeIcon, Star as StarIcon, Globe, ShieldCheck, Lock as LockIcon, Activity as ActivityIcon, Map as MapIcon, AlertCircle, Server, MapPin, Zap, Gauge, Folder, File, ChevronRight, ChevronDown, FileImage, FileCode, Mail, Bot, FileText, Fingerprint, Dna, Loader2, X as CloseIcon } from "@lucide/svelte";
   import { analyzeHtml } from '$lib/scanner/analysis';
@@ -391,19 +392,13 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
         {:else}
           <File size={14} class="text-neutral-400" />
         {/if}
-      {#if node.type === 'file'}
         <button 
-          onclick={() => openAsset(node)}
+          onclick={(e) => { e.stopPropagation(); openAsset(node); }}
           title={node.name}
           class="text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white truncate text-left w-full"
         >
           {node.name}
         </button>
-      {:else}
-        <span class="text-xs text-neutral-600 dark:text-neutral-400 truncate">
-          {node.name}
-        </span>
-      {/if}
       {/if}
     </div>
 
