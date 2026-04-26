@@ -4,9 +4,9 @@
 
 ![WebDNA](https://github.com/xtrafr/webdna/blob/main/.github/webdnapreview.png)
 
-**See everything behind any website in 1 click.
+**See everything behind any website in 1 click.**
 
-DNS, infrastructure, security, assets, colors, fonts, all in one clean dashboard.**
+**DNS, infrastructure, security, assets, colors, fonts, all in one clean dashboard.**
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/?repo=xtrafr/webdna)
 
