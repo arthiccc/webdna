@@ -35,6 +35,8 @@ export function addToHistory(report: SiteReport) {
       domain: item.domain,
       name: item.name,
       favicon: item.favicon,
+      ogImage: item.ogImage,
+      description: item.description,
       updatedAt: item.updatedAt
     } as SiteReport));
     
@@ -43,6 +45,8 @@ export function addToHistory(report: SiteReport) {
       domain: report.domain,
       name: report.name,
       favicon: report.favicon,
+      ogImage: report.ogImage,
+      description: report.description,
       updatedAt: report.updatedAt
     } as SiteReport;
     return [lightweightReport, ...filtered].slice(0, 20);
@@ -56,6 +60,8 @@ export function toggleFavorite(report: SiteReport) {
       domain: item.domain,
       name: item.name,
       favicon: item.favicon,
+      ogImage: item.ogImage,
+      description: item.description,
       updatedAt: item.updatedAt
     } as SiteReport));
     
@@ -67,6 +73,8 @@ export function toggleFavorite(report: SiteReport) {
         domain: report.domain,
         name: report.name,
         favicon: report.favicon,
+        ogImage: report.ogImage,
+        description: report.description,
         updatedAt: report.updatedAt
       } as SiteReport;
       return [lightweightReport, ...lightweightF];
