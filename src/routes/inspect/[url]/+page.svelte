@@ -237,22 +237,22 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 
 <svelte:head>
   {#if report}
-    <title>{report.name}</title>
-    <meta name="description" content={report.description || `Inspection report for ${report.domain}.`} />
+    <title>{report.name} — Siteglow Report</title>
+    <meta name="description" content={report.description || `Full inspection report for ${report.domain}. Explore technology stack, branding, assets, and performance metrics.`} />
     
     <!-- OpenGraph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={report.name} />
-    <meta property="og:description" content={report.description || `Inspection report for ${report.domain}.`} />
-    <meta property="og:image" content={report.ogImage || report.favicon} />
+    <meta property="og:title" content={`${report.name} — Website Inspection Report`} />
+    <meta property="og:description" content={report.description || `Analyze the tech stack, branding, and assets of ${report.domain} with Siteglow.`} />
+    <meta property="og:image" content="https://siteglow.xtra.wtf/og-image.png" />
 
     <!-- Twitter -->
-    <meta property="twitter:card" content="summary" />
-    <meta property="twitter:title" content={report.name} />
-    <meta property="twitter:description" content={report.description || `Inspection report for ${report.domain}.`} />
-    <meta property="twitter:image" content={report.ogImage || report.favicon} />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content={`${report.name} — Website Inspection Report`} />
+    <meta property="twitter:description" content={report.description || `Analyze the tech stack, branding, and assets of ${report.domain} with Siteglow.`} />
+    <meta property="twitter:image" content="https://siteglow.xtra.wtf/og-image.png" />
   {:else}
-    <title>Inspecting...</title>
+    <title>Inspecting Website...</title>
   {/if}
 </svelte:head>
 
