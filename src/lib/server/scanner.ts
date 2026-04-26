@@ -27,8 +27,17 @@ export async function getNetworkOnlyReport(domain: string): Promise<Partial<Site
     fetchSSL(domain).catch(() => undefined),
   ]);
 
-  const firstA = dnsRecords.find(r => r.type === 'A')?.value;
-  const ipInfo = firstA ? await fetchIPInfo(firstA) : { provider: 'Unknown', location: 'Unknown' };
+  // Resolve IP Info from the first A record
+  let firstA = dnsRecords.find(r => r.type === 'A')?.value;
+  
+  // If no A record found for the subdomain (e.g. www), try the root domain
+  if (!firstA && domain.split('.').length > 2) {
+    const rootDomain = domain.split('.').slice(-2).join('.');
+    const rootDns = await fetchDNS(rootDomain).catch(() => []);
+    firstA = rootDns.find(r => r.type === 'A')?.value;
+  }
+
+  const ipInfo = firstA ? await fetchIPInfo(firstA) : { provider: 'Unknown Provider', location: 'Unknown Location' };
 
   return {
     dns: dnsRecords,
@@ -155,9 +164,18 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   ]);
 
   // Resolve IP Info from the first A record
-  const firstA = dnsRecords.find(r => r.type === 'A')?.value;
-  console.log(`[scanner.ts] Resolved IP: ${firstA || 'None'} for domain: ${domain}`);
-  const ipInfo = firstA ? await fetchIPInfo(firstA) : { provider: 'Unknown', location: 'Unknown' };
+  let firstA = dnsRecords.find(r => r.type === 'A')?.value;
+  
+  // If no A record found for the subdomain (e.g. www), try the root domain
+  if (!firstA && domain.split('.').length > 2) {
+    const rootDomain = domain.split('.').slice(-2).join('.');
+    console.log(`[scanner.ts] No A record for ${domain}, trying root domain: ${rootDomain}`);
+    const rootDns = await fetchDNS(rootDomain).catch(() => []);
+    firstA = rootDns.find(r => r.type === 'A')?.value;
+  }
+
+  console.log(`[scanner.ts] Final Resolved IP: ${firstA || 'None'} for domain: ${domain}`);
+  const ipInfo = firstA ? await fetchIPInfo(firstA) : { provider: 'Unknown Provider', location: 'Unknown Location' };
 
   // 1. Basic Info
   const title = $('title').text() || $('meta[property="og:title"]').attr('content') || $('meta[name="twitter:title"]').attr('content') || '';
