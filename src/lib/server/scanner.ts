@@ -105,6 +105,11 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
         
         html = proxyText;
         if (!html) throw new Error("Empty response from ScrapingAnt");
+        
+        // Try to extract the final URL if ScrapingAnt followed redirects
+        // Note: ScrapingAnt doesn't easily return the final URL in the 'general' endpoint 
+        // without extra metadata, so we'll stick to targetUrl for now but ensured it's set.
+        finalUrl = targetUrl; 
       } catch (proxyErr: any) {
         console.error(`[scanner.ts] ScrapingAnt fallback failed:`, proxyErr);
         throw new Error(`The target website blocked our crawler, and the ScrapingAnt fallback failed. (${proxyErr.message})`);
@@ -151,6 +156,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
 
   // Resolve IP Info from the first A record
   const firstA = dnsRecords.find(r => r.type === 'A')?.value;
+  console.log(`[scanner.ts] Resolved IP: ${firstA || 'None'} for domain: ${domain}`);
   const ipInfo = firstA ? await fetchIPInfo(firstA) : { provider: 'Unknown', location: 'Unknown' };
 
   // 1. Basic Info

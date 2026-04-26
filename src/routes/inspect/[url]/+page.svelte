@@ -16,28 +16,29 @@
   let clientReport = $state<any>(null);
   let clientError = $state<string | null>(null);
   let isScanningClient = $state(false);
-
+  let serverReportResolved = $state<any>(null);
+  
   // Derive final report and error
-  let report = $derived(clientReport || data.report);
+  let report = $derived(clientReport || serverReportResolved);
   let error = $derived(clientError || data.error);
   
   let isFavorite = $derived($favorites.some(f => f.domain === report?.domain));
 
-  onMount(async () => {
-    // If the server was blocked, try from the browser
-    if (data.needsClientFetch && !clientReport) {
-      await performClientScan();
-    }
-
-    if (report) {
-      if (report instanceof Promise) {
-        report.then(r => {
-          if (r) addToHistory(r);
-        }).catch(() => {});
-      } else {
-        addToHistory(report);
+  // Svelte 5 effect to handle history and client-side fallback
+  $effect(() => {
+    const r = data.streamed.report;
+    r.then(reportValue => {
+      serverReportResolved = reportValue;
+      if (reportValue) {
+        if (reportValue.needsClientFetch && !clientReport) {
+           performClientScan();
+        } else if (!reportValue.needsClientFetch) {
+           addToHistory(reportValue);
+        }
       }
-    }
+    }).catch(err => {
+      clientError = err.message || "Failed to scan website";
+    });
   });
 
   async function performClientScan() {
@@ -315,7 +316,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
     </div>
   </div>
 {:else}
-  {#await data.report}
+  {#await data.streamed.report}
     <!-- Skeleton Loader -->
     <div class="mt-2 flex flex-col space-y-2 px-2" in:fade>
       <div class="p-px">
@@ -345,9 +346,10 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
         </div>
       </div>
     </div>
-  {:then reportVal}
-    <!-- Note: report is derived from clientReport or data.report -->
-    {#if report}
+  {:then reportValue}
+    <!-- Note: report is derived from clientReport or reportValue -->
+    {@const activeReport = clientReport || reportValue}
+    {#if activeReport}
       <div class="mt-2 flex flex-col space-y-2 px-2">
         <div class="p-px">
           <div class="overflow-hidden rounded-md border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/40">
@@ -374,13 +376,13 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                   <div class="flex items-center gap-4">
                     <div class="flex h-16 w-16 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
                       <img 
-                        src={report.favicon} 
-                        alt={report.name} 
+                        src={activeReport.favicon} 
+                        alt={activeReport.name} 
                         class="h-10 w-10 object-contain" 
                         onerror={(e) => {
                           const target = e.currentTarget;
                           if (!target.src.includes('google.com')) {
-                            target.src = `https://www.google.com/s2/favicons?domain=${report.domain}&sz=128`;
+                            target.src = `https://www.google.com/s2/favicons?domain=${activeReport.domain}&sz=128`;
                           }
                         }}
                       />
@@ -388,12 +390,12 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                     <div>
                       <div class="flex items-center gap-3">
                         <h1 class="text-2xl font-bold tracking-tight text-neutral-900 dark:text-white md:text-3xl">
-                          {report.name}
+                          {activeReport.name}
                         </h1>
                       </div>
                       <div class="mt-0.5 flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
-                        <span class="text-base">{report.domain}</span>
-                        <a href="https://{report.domain}" target="_blank" class="hover:text-neutral-900 dark:hover:text-white">
+                        <span class="text-base">{activeReport.domain}</span>
+                        <a href="https://{activeReport.domain}" target="_blank" class="hover:text-neutral-900 dark:hover:text-white">
                           <ExternalLinkIcon size={16} />
                         </a>
                       </div>

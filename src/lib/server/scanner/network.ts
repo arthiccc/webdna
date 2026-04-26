@@ -32,9 +32,17 @@ export async function fetchDNS(domain: string): Promise<DNSRecord[]> {
       if (!res.ok) return [];
       const data = await res.json();
       if (!data.Answer) return [];
+      const typeMap: Record<number, string> = {
+        1: 'A',
+        2: 'NS',
+        5: 'CNAME',
+        15: 'MX',
+        16: 'TXT',
+        28: 'AAAA'
+      };
       
       return data.Answer.map((ans: any) => ({
-        type,
+        type: typeMap[ans.type] || `TYPE${ans.type}`,
         value: ans.data.replace(/"/g, '') // Clean up TXT records
       }));
     } catch (err) {
