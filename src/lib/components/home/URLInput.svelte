@@ -15,8 +15,14 @@
     
     isLoading = true;
     // Simulate initial check
-    setTimeout(() => {
-      goto(`/inspect/${encodeURIComponent(url)}`);
+    setTimeout(async () => {
+      try {
+        await goto(`/inspect/${encodeURIComponent(url)}`);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        isLoading = false;
+      }
     }, 800);
   };
 

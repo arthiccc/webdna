@@ -30,18 +30,46 @@ export const favorites = createPersistedStore<SiteReport[]>(STORAGE_KEY_FAVORITE
 
 export function addToHistory(report: SiteReport) {
   history.update(h => {
-    const filtered = h.filter(item => item.domain !== report.domain);
-    return [report, ...filtered].slice(0, 50);
+    // Map all existing items to lightweight versions to fix any old giant objects causing QuotaExceededError
+    const lightweightH = h.map(item => ({
+      domain: item.domain,
+      name: item.name,
+      favicon: item.favicon,
+      updatedAt: item.updatedAt
+    } as SiteReport));
+    
+    const filtered = lightweightH.filter(item => item.domain !== report.domain);
+    const lightweightReport = {
+      domain: report.domain,
+      name: report.name,
+      favicon: report.favicon,
+      updatedAt: report.updatedAt
+    } as SiteReport;
+    return [lightweightReport, ...filtered].slice(0, 20);
   });
 }
 
 export function toggleFavorite(report: SiteReport) {
   favorites.update(f => {
-    const exists = f.find(item => item.domain === report.domain);
+    // Map all existing items to lightweight versions to fix any old giant objects
+    const lightweightF = f.map(item => ({
+      domain: item.domain,
+      name: item.name,
+      favicon: item.favicon,
+      updatedAt: item.updatedAt
+    } as SiteReport));
+    
+    const exists = lightweightF.find(item => item.domain === report.domain);
     if (exists) {
-      return f.filter(item => item.domain !== report.domain);
+      return lightweightF.filter(item => item.domain !== report.domain);
     } else {
-      return [report, ...f];
+      const lightweightReport = {
+        domain: report.domain,
+        name: report.name,
+        favicon: report.favicon,
+        updatedAt: report.updatedAt
+      } as SiteReport;
+      return [lightweightReport, ...lightweightF];
     }
   });
 }
