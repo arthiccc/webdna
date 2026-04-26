@@ -19,8 +19,6 @@
 - **Asset Explorer** - IDE style file explorer to browse a site's images, scripts, and styles
 - **Subdomains** - Automatic mapping of the digital ecosystem surrounding any domain
 - **Email Protection** - Detection of SPF and DMARC configurations to prevent spoofing
-- **Colors and fonts** - Automatic brand color extraction and typography analysis
-- **Search Engine Discovery** - Direct access to Robots.txt and Sitemap configurations
 - **Beautiful UI** - Minimalist, high density dashboard with smooth animations
 
 ## Quick Start
@@ -30,8 +28,8 @@ Start the project locally and enter any URL to begin your audit.
 
 ### Clone locally
 ```bash
-git clone https://github.com/xtrafr/siteglow.git
-cd siteglow
+git clone https://github.com/xtrafr/webdna.git
+cd webdna
 npm install
 ```
 
@@ -58,7 +56,7 @@ npm run dev
 ## Project Structure
 
 ```
-siteglow/
+webdna/
 ├── src/
 │   ├── lib/
 │   │   ├── server/      # Core scanning logic & network probes
@@ -70,7 +68,7 @@ siteglow/
 └── README.md            # This file
 ```
 
-## Why Siteglow?
+## Why WebDNA?
 
 - **Privacy first** - Audits are performed on your terms
 - **Instant** - No loading time, no complex setup

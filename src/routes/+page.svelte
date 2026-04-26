@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-  <title>Siteglow</title>
+  <title>WebDNA</title>
 </svelte:head>
 
 <div class="mt-2 flex flex-col space-y-2">

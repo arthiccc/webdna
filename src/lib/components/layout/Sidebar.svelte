@@ -2,7 +2,7 @@
 	import { cn } from '$lib/utils';
 	import { page } from '$app/state';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Search, Globe, SwatchBook, ShieldCheck, Gauge, History, Star } from '@lucide/svelte';
+	import { Search, Globe, SwatchBook, ShieldCheck, Gauge, History, Star, Dna } from '@lucide/svelte';
 
 	let { class: className } = $props<{ class?: string }>();
 
@@ -30,7 +30,7 @@
 	)}
 >
 	<div class="flex h-14 items-center px-6">
-		<h2 class="text-xl font-bold tracking-tight dark:text-white">Siteglow</h2>
+		<h2 class="text-xl font-bold tracking-tight dark:text-white">WebDNA</h2>
 	</div>
 
 	<nav class="flex flex-col space-y-1 px-2">

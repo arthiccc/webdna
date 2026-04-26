@@ -2,8 +2,8 @@ import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import type { SiteReport } from '../types';
 
-const STORAGE_KEY_HISTORY = 'siteglow_history';
-const STORAGE_KEY_FAVORITES = 'siteglow_favorites';
+const STORAGE_KEY_HISTORY = 'webdna_history';
+const STORAGE_KEY_FAVORITES = 'webdna_favorites';
 
 function createPersistedStore<T>(key: string, startValue: T) {
   const initialValue = browser ? JSON.parse(localStorage.getItem(key) || JSON.stringify(startValue)) : startValue;

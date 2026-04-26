@@ -35,7 +35,7 @@
         <div class="flex items-center">
           <div class="h-6 w-[1px] bg-neutral-200 dark:bg-neutral-800 ml-4 mr-3"></div>
           <a
-            href="https://github.com/xtrafr/siteglow"
+            href="https://github.com/xtrafr/webdna"
             target="_blank"
             rel="noreferrer"
             class="flex items-center space-x-2.5 transition-opacity hover:opacity-80"

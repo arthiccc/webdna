@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ url }) => {
   try {
     const response = await fetch(assetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SiteglowBot/1.0)'
+        'User-Agent': 'Mozilla/5.0 (compatible; WebDNABot/1.0)'
       }
     });
 
