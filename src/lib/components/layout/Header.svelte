@@ -38,6 +38,7 @@
             href="https://github.com/xtrafr/webdna"
             target="_blank"
             rel="noreferrer"
+            data-umami-event="github-star-click"
             class="flex items-center space-x-2.5 transition-opacity hover:opacity-80"
           >
             <GithubIcon size={20} class="text-neutral-900 dark:text-white" />
@@ -62,7 +63,7 @@
 
       <!-- Mobile Menu Toggle -->
       <div class="flex items-center gap-2 md:hidden">
-        <ModeToggle class="h-9 w-9 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-800" />
+        <ModeToggle data-umami-event="theme-toggle-click" class="h-9 w-9 rounded-md hover:bg-neutral-200 dark:hover:bg-neutral-800" />
         <button 
           onclick={() => isMenuOpen = !isMenuOpen}
           class="flex h-9 w-9 items-center justify-center rounded-md bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-white"

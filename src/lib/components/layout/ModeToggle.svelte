@@ -24,7 +24,7 @@
   });
 </script>
 
-<button class={className} onclick={toggleMode} title="Mode Toggle (Cmd + l)">
+<button class={className} onclick={toggleMode} title="Mode Toggle (Cmd + l)" data-umami-event="theme-toggle-click">
   <div class="relative flex items-center justify-center">
     <SunIcon
       size={20}
