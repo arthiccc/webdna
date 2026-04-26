@@ -185,17 +185,30 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   
   // Advanced Favicon Detection
   let favicon = '';
-  const appleTouchIcon = $('link[rel="apple-touch-icon"]').attr('href');
-  const icon = $('link[rel="icon"]').attr('href');
-  const shortcutIcon = $('link[rel="shortcut icon"]').attr('href');
+  const iconLinks = $('link[rel*="icon"]');
+  let bestIcon = '';
   
-  const faviconPath = appleTouchIcon || icon || shortcutIcon;
-    
-  if (faviconPath) {
-    favicon = new URL(faviconPath, finalUrl).href;
+  iconLinks.each((_, el) => {
+    const href = $(el).attr('href');
+    if (href) {
+      const fullHref = new URL(href, finalUrl).href;
+      // Prioritize SVG or high-res PNG
+      if (fullHref.includes('.svg') || fullHref.includes('.png')) {
+        bestIcon = fullHref;
+      } else if (!bestIcon) {
+        bestIcon = fullHref;
+      }
+    }
+  });
+
+  const appleTouchIcon = $('link[rel="apple-touch-icon"]').attr('href');
+  if (appleTouchIcon) {
+    favicon = new URL(appleTouchIcon, finalUrl).href;
+  } else if (bestIcon) {
+    favicon = bestIcon;
   } else {
-    // Fallback to root favicon.ico which most sites have
-    favicon = `https://${domain}/favicon.ico`;
+    // Fallback to Google's favicon service for maximum reliability
+    favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   }
   
   // 2. Logo Detection

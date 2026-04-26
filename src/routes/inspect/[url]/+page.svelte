@@ -20,6 +20,97 @@
   let isScanningClient = $state(false);
   let serverReportResolved = $state<any>(null);
   
+  // Asset Viewer state
+  let selectedAsset = $state<any>(null);
+  let assetContent = $state<string>('');
+  let isAssetLoading = $state(false);
+  let assetError = $state(false);
+
+  function formatAndHighlight(code: string, type: string) {
+    if (!code) return '';
+    
+    // Simple prettifier for minified code
+    let formatted = code;
+    if (type === 'script' || type === 'style') {
+      formatted = code
+        .replace(/([{};])/g, '$1\n')
+        .replace(/\n\s*\n/g, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('\n');
+      
+      // Basic indentation
+      let indent = 0;
+      formatted = formatted.split('\n').map(line => {
+        if (line.includes('}')) indent--;
+        const spaced = '  '.repeat(Math.max(0, indent)) + line;
+        if (line.includes('{')) indent++;
+        return spaced;
+      }).join('\n');
+    }
+
+    // Basic Syntax Highlighting (Regex based)
+    // Escaping HTML
+    let html = formatted
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    if (type === 'script') {
+      html = html
+        .replace(/\b(const|let|var|function|return|if|else|for|while|import|export|from|async|await|const|new|try|catch|finally|class|extends|await)\b/g, '<span class="text-purple-500 font-bold">$1</span>')
+        .replace(/\b(true|false|null|undefined)\b/g, '<span class="text-orange-500 font-bold">$1</span>')
+        .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-green-500">$1</span>')
+        .replace(/\/\/.*/g, '<span class="text-neutral-500">$1</span>')
+        .replace(/\b(\d+)\b/g, '<span class="text-blue-500">$1</span>');
+    } else if (type === 'style') {
+      html = html
+        .replace(/([a-zA-Z-]+)(?=\s*:)/g, '<span class="text-blue-400 font-bold">$1</span>')
+        .replace(/:([^;]+);/g, ': <span class="text-orange-400">$1</span>;')
+        .replace(/(\.[a-zA-Z0-9_-]+|#[a-zA-Z0-9_-]+|[a-z]+)(?=\s*\{)/g, '<span class="text-yellow-500 font-bold">$1</span>');
+    }
+
+    return html;
+  }
+
+  async function openAsset(asset: any) {
+    if (asset.type === 'folder') return;
+    
+    selectedAsset = asset;
+    assetContent = '';
+    assetError = false;
+    
+    if (asset.fileType === 'script' || asset.fileType === 'style' || asset.fileType === 'document') {
+      isAssetLoading = true;
+      try {
+        const res = await fetch(`/api/proxy-asset?url=${encodeURIComponent(asset.url)}`);
+        if (res.ok) {
+          const raw = await res.text();
+          assetContent = formatAndHighlight(raw, asset.fileType);
+        } else {
+          assetContent = '<span class="text-red-500">// Failed to load asset content.</span>';
+        }
+      } catch (err) {
+        assetContent = '<span class="text-red-500">// Error fetching asset.</span>';
+      } finally {
+        isAssetLoading = false;
+      }
+    }
+  }
+  
+  // Scroll lock effect
+  $effect(() => {
+    if (isMapOpen || selectedAsset || showFullDesc) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  });
+  
   // Derive final report and error
   let report = $derived(clientReport || serverReportResolved);
   let error = $derived(clientError || data.error);
@@ -298,9 +389,18 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
         {:else}
           <File size={14} class="text-neutral-400" />
         {/if}
-        <a href={node.url} target="_blank" class="text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white truncate">
+      {#if node.type === 'file'}
+        <button 
+          onclick={() => openAsset(node)}
+          class="text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white truncate text-left w-full"
+        >
           {node.name}
-        </a>
+        </button>
+      {:else}
+        <span class="text-xs text-neutral-600 dark:text-neutral-400 truncate">
+          {node.name}
+        </span>
+      {/if}
       {/if}
     </div>
 
@@ -619,23 +719,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       </div>
                     </section>
 
-                    <!-- Fonts Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <TypeIcon size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Detected Fonts</h2>
-                      </div>
-                      <div class="flex flex-wrap gap-1.5">
-                        {#each activeReport.fonts as font}
-                          <div class="flex items-center gap-2 rounded-md border border-neutral-100 bg-neutral-50 px-2 py-1 dark:border-neutral-800 dark:bg-neutral-950">
-                            <span class="text-xs font-medium truncate" style="font-family: {font}">{font}</span>
-                            <button class="text-neutral-400 hover:text-neutral-900 dark:hover:text-white" onclick={() => copyToClipboard(font, 'Font name')}>
-                              <CopyIcon size={8} />
-                            </button>
-                          </div>
-                        {/each}
-                      </div>
-                    </section>
+
 
                     <!-- Tech Stack Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
@@ -1092,7 +1176,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
             height="100%"
             frameborder="0"
             src="https://www.openstreetmap.org/export/embed.html?bbox={report.longitude-0.1},{report.latitude-0.1},{report.longitude+0.1},{report.latitude+0.1}&layer=mapnik&marker={report.latitude},{report.longitude}"
-            class="opacity-100"
+            class="opacity-100 dark:invert-[0.9] dark:hue-rotate-180 dark:brightness-[1.1] dark:contrast-[0.9]"
           ></iframe>
         {:else}
           <div class="absolute inset-0 flex items-center justify-center flex-col gap-2">
@@ -1113,6 +1197,79 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
         >
           <ExternalLinkIcon size={18} />
         </a>
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if selectedAsset}
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" transition:fade={{ duration: 150 }} onclick={() => selectedAsset = null}>
+    <div class="w-full max-w-4xl bg-white dark:bg-neutral-900 rounded-none overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800" onclick={(e) => e.stopPropagation()} transition:fly={{ y: 10, duration: 150 }}>
+      <div class="p-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="h-6 w-6 rounded bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+            {#if selectedAsset.fileType === 'image'}
+              <FileImage size={12} class="text-blue-500" />
+            {:else if selectedAsset.fileType === 'script'}
+              <FileCode size={12} class="text-yellow-500" />
+            {:else}
+              <FileText size={12} class="text-neutral-500" />
+            {/if}
+          </div>
+          <span class="text-xs font-black tracking-tight dark:text-white uppercase truncate">{selectedAsset.name}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href={selectedAsset.url} target="_blank" class="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
+            <ExternalLinkIcon size={14} />
+          </a>
+          <button onclick={() => selectedAsset = null} class="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <CloseIcon size={16} class="text-neutral-500" />
+          </button>
+        </div>
+      </div>
+      
+      <div class="max-h-[70vh] overflow-auto bg-neutral-50 dark:bg-neutral-950 p-0 relative min-h-[400px]">
+        {#if selectedAsset.fileType === 'image'}
+          <div class="flex items-center justify-center p-8 min-h-[400px]">
+            {#if assetError}
+              <div class="flex flex-col items-center gap-3 text-neutral-400">
+                <AlertCircle size={32} />
+                <span class="text-xs font-bold uppercase tracking-widest">Asset Not Available</span>
+                <p class="text-[10px] max-w-[200px] text-center opacity-60">The image could not be loaded. It might be protected or no longer exists.</p>
+              </div>
+            {:else}
+              <img 
+                src={selectedAsset.url} 
+                alt={selectedAsset.name} 
+                class="max-w-full h-auto shadow-lg border border-neutral-200 dark:border-neutral-800" 
+                onerror={() => assetError = true}
+              />
+            {/if}
+          </div>
+        {:else if isAssetLoading}
+          <div class="absolute inset-0 flex items-center justify-center flex-col gap-3">
+            <Loader2 size={24} class="text-neutral-400 animate-spin" />
+            <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Fetching & Formatting...</span>
+          </div>
+        {:else}
+          <div class="p-4 font-mono text-[11px] leading-relaxed dark:text-neutral-300">
+            <pre class="whitespace-pre overflow-x-auto">
+              {@html assetContent || '// No content available.'}
+            </pre>
+          </div>
+        {/if}
+      </div>
+      
+      <div class="p-2 border-t border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center justify-between">
+        <span class="text-[9px] font-black uppercase text-neutral-400 tracking-tighter truncate max-w-[70%] px-2">
+          {selectedAsset.url}
+        </span>
+        <button 
+          onclick={() => copyToClipboard(selectedAsset.url, 'Asset URL')}
+          class="text-[9px] font-black uppercase text-[#7bc5e4] hover:underline px-2"
+        >
+          Copy URL
+        </button>
       </div>
     </div>
   </div>
