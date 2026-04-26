@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![WebDNA](https://github.com/xtrafr/webdna/blob/main/.github/webdna.png)
+![WebDNA](https://github.com/xtrafr/webdna/blob/main/.github/webdnapreview.png)
 
 **A high-performance technical auditing engine that lives in your browser**
 
@@ -12,7 +12,7 @@
 
 ---
 
-## 🧬 Features
+## Features
 
 - **Design DNA** - Automatic extraction of brand colors and precise typography analysis.
 - **Infrastructure** - Instantly find the IP address, server location, and hosting provider.
@@ -22,7 +22,7 @@
 - **Email Protection** - Detection of SPF and DMARC configurations to prevent spoofing.
 - **Beautiful UI** - Minimalist, high-density dashboard with smooth animations.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone locally
 ```bash
@@ -42,7 +42,7 @@ SCRAPINGANT_API_KEY="your_api_key_here"
 npm run dev
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: SvelteKit 5 (Runes)
 - **Styling**: Tailwind CSS
@@ -50,7 +50,7 @@ npm run dev
 - **Proxy**: ScrapingAnt API (WAF bypass)
 - **Icons**: Lucide Svelte
 
-## 🔌 API Reference
+## API Reference
 
 <details>
 <summary><b>Analyze Endpoint</b> (Internal)</summary>
@@ -76,7 +76,7 @@ Returns a `report` object containing:
 A security-first proxy to fetch and preview remote assets (CSS/JS) without CORS issues.
 </details>
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 webdna/
@@ -91,12 +91,12 @@ webdna/
 └── README.md            # This file
 ```
 
-## ⚖️ License
+## License
 
 MIT © [Xtra](https://github.com/xtrafr)
 
 ---
 
 <div align="center">
-Made with 🧬 by <a href="https://github.com/xtrafr">Xtra</a>
+Made with DNA by <a href="https://github.com/xtrafr">Xtra</a>
 </div>
