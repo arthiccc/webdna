@@ -125,13 +125,13 @@ export function analyzeHeaders(headers: Headers): SecurityHeader[] {
 
 export async function fetchIPInfo(ip: string): Promise<{ provider: string, location: string }> {
   try {
-    // Using ipapi.co as it supports HTTPS for free and is generally reliable
-    const res = await fetchWithTimeout(`https://ipapi.co/${ip}/json/`, {}, 4000);
+    // Using freeipapi.com because ipapi.co heavily rate limits Vercel datacenter IPs
+    const res = await fetchWithTimeout(`https://freeipapi.com/api/json/${ip}`, {}, 4000);
     if (!res.ok) throw new Error('IP API returned error');
     const data = await res.json();
     return {
-      provider: data.org || data.asn || 'Unknown Provider',
-      location: data.city && data.country_name ? `${data.city}, ${data.country_name}` : 'Unknown Location'
+      provider: data.asnOrganization || 'Unknown Provider',
+      location: data.cityName && data.countryName ? `${data.cityName}, ${data.countryName}` : (data.countryName || 'Unknown Location')
     };
   } catch (err) {
     console.error('IP Info fetch error:', err);
