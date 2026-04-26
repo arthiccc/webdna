@@ -43,7 +43,7 @@
 
 <form 
   onsubmit={handleSubmit}
-  class={cn("relative w-full", className)}
+  class={cn("relative w-full px-4 md:px-0", className)}
 >
   <div class="relative flex items-center">
     <div class="pointer-events-none absolute left-3 text-neutral-400 dark:text-neutral-500">

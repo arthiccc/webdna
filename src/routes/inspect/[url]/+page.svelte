@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { cn } from '$lib/utils';
   import { onMount } from 'svelte';
   import { fade, fly } from 'svelte/transition';
   import { history, favorites, addToHistory, toggleFavorite } from '$lib/stores/appState';
@@ -396,23 +397,23 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
               <!-- Content -->
               <div class="p-4 md:p-6">
                 <!-- Header / Overview -->
-                <div class="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-                  <div class="flex items-center gap-4">
-                    <div class="flex h-16 w-16 items-center justify-center rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden">
+                <div class="mb-10 flex flex-col items-center justify-between gap-8 md:flex-row md:items-center">
+                  <div class="flex flex-col items-center gap-4 md:flex-row md:items-start text-center md:text-left">
+                    <div class="flex h-20 w-20 md:h-14 md:w-14 items-center justify-center rounded-2xl border border-neutral-100 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden shrink-0">
                       <img 
                         src={activeReport.favicon} 
                         alt={activeReport.name} 
-                        class="h-10 w-10 object-contain" 
+                        class="h-12 w-12 md:h-10 md:w-10 object-contain" 
                         onerror={handleImageError}
                       />
                     </div>
                     <div>
-                      <div class="flex items-center gap-3">
+                      <div class="flex flex-col md:flex-row items-center gap-3">
                         <h1 class="text-3xl font-black tracking-tight text-neutral-900 dark:text-white md:text-4xl">
                           {activeReport.name}
                         </h1>
                       </div>
-                      <div class="mt-1 flex items-center gap-2 text-neutral-500 dark:text-neutral-400">
+                      <div class="mt-1 flex items-center justify-center md:justify-start gap-2 text-neutral-500 dark:text-neutral-400">
                         <span class="text-lg font-medium font-mono">{activeReport.domain}</span>
                         <a href="https://{activeReport.domain}" target="_blank" class="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors">
                           <ExternalLinkIcon size={12} />
@@ -421,26 +422,29 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                     </div>
                   </div>
                   
-                  <div class="flex items-center gap-2">
+                  <div class="flex w-full items-center justify-center gap-2 md:w-auto">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       onclick={handleToggleFavorite}
-                      class={isFavorite ? "bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800" : ""}
+                      class={cn(
+                        "flex-1 md:flex-none px-4 h-10 md:h-8",
+                        isFavorite ? "bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800" : ""
+                      )}
                     >
                       <StarIcon size={14} fill={isFavorite ? "currentColor" : "none"} />
-                      {isFavorite ? 'Favorited' : 'Favorite'}
+                      <span class="md:inline">{isFavorite ? 'Favorited' : 'Favorite'}</span>
                     </Button>
-                    <Button variant="outline" size="sm" onclick={() => copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON')}>
+                    <Button variant="outline" size="sm" onclick={() => copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON')} class="h-10 md:h-8 px-4">
                       <DownloadIcon size={14} />
-                      JSON
+                      <span class="hidden md:inline">JSON</span>
                     </Button>
                     <Button 
                       variant="default" 
                       size="sm" 
                       onclick={() => copyToClipboard(window.location.href, 'Report URL')}
                       style="background-color: #7bc5e4; color: white; border: none;"
-                      class="shadow-lg shadow-[#7bc5e4]/20 transition-transform active:scale-95 hover:brightness-105"
+                      class="flex-1 md:flex-none shadow-lg shadow-[#7bc5e4]/20 transition-transform active:scale-95 hover:brightness-105 h-10 md:h-8 px-6"
                     >
                       <ShareIcon size={14} />
                       Share
@@ -449,9 +453,9 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                 </div>
 
                 <!-- Server info -->
-                <div class="mb-10 flex flex-wrap gap-4">
-                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[140px] flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700">
+                <div class="mb-10 flex w-full gap-4 overflow-x-auto pb-2 no-scrollbar md:flex-wrap md:overflow-visible md:pb-0">
+                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[140px] flex items-center gap-3 shrink-0">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
                       <Globe size={14} class="text-neutral-500" />
                     </div>
                     <div>
@@ -459,17 +463,17 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <p class="text-xs font-mono font-bold dark:text-white">{activeReport.ip || 'Unknown'}</p>
                     </div>
                   </div>
-                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700">
+                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
                       <Server size={14} class="text-neutral-500" />
                     </div>
                     <div>
                       <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">Provider</span>
-                      <p class="text-xs font-bold dark:text-white">{activeReport.provider || 'Unknown'}</p>
+                      <p class="text-xs font-bold dark:text-white truncate max-w-[100px]">{activeReport.provider || 'Unknown'}</p>
                     </div>
                   </div>
-                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700">
+                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0">
+                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
                       <MapPin size={14} class="text-neutral-500" />
                     </div>
                     <div>
