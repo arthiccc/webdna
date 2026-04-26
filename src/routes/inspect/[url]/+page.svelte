@@ -347,7 +347,6 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
       </div>
     </div>
   {:then reportValue}
-    <!-- Note: report is derived from clientReport or reportValue -->
     {@const activeReport = clientReport || reportValue}
     {#if activeReport}
       <div class="mt-2 flex flex-col space-y-2 px-2">
@@ -412,7 +411,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <StarIcon size={14} fill={isFavorite ? "currentColor" : "none"} />
                       {isFavorite ? 'Favorited' : 'Favorite'}
                     </Button>
-                    <Button variant="outline" size="sm" onclick={() => copyToClipboard(JSON.stringify(report, null, 2), 'Report JSON')}>
+                    <Button variant="outline" size="sm" onclick={() => copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON')}>
                       <DownloadIcon size={14} />
                       JSON
                     </Button>
@@ -430,21 +429,21 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <Globe size={12} />
                       <span class="text-[9px] font-bold uppercase tracking-wider">IP Address</span>
                     </div>
-                    <p class="text-xs font-mono font-medium dark:text-white">{report.ip || 'Unknown'}</p>
+                    <p class="text-xs font-mono font-medium dark:text-white">{activeReport.ip || 'Unknown'}</p>
                   </div>
                   <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-2.5 dark:border-neutral-800 dark:bg-neutral-900/30 min-w-[140px]">
                     <div class="mb-1 flex items-center gap-2 text-neutral-500">
                       <Server size={12} />
                       <span class="text-[9px] font-bold uppercase tracking-wider">Hosted by</span>
                     </div>
-                    <p class="text-xs font-medium dark:text-white">{report.provider || 'Unknown'}</p>
+                    <p class="text-xs font-medium dark:text-white">{activeReport.provider || 'Unknown'}</p>
                   </div>
                   <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-2.5 dark:border-neutral-800 dark:bg-neutral-900/30 min-w-[140px]">
                     <div class="mb-1 flex items-center gap-2 text-neutral-500">
                       <MapPin size={12} />
                       <span class="text-[9px] font-bold uppercase tracking-wider">Server location</span>
                     </div>
-                    <p class="text-xs font-medium dark:text-white">{report.location || 'Unknown'}</p>
+                    <p class="text-xs font-medium dark:text-white">{activeReport.location || 'Unknown'}</p>
                   </div>
                 </div>
 
@@ -464,7 +463,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         </Button>
                       </div>
                       <div class="flex flex-wrap gap-2">
-                        {#each report.brandColors as color}
+                        {#each activeReport.brandColors as color}
                           <button 
                             onclick={() => copyToClipboard(color, 'Color')}
                             class="group relative flex items-center gap-2 rounded-lg border border-neutral-100 bg-neutral-50 p-1.5 transition-all hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
@@ -488,7 +487,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold dark:text-white">Detected Fonts</h2>
                       </div>
                       <div class="flex flex-wrap gap-1.5">
-                        {#each report.fonts as font}
+                        {#each activeReport.fonts as font}
                           <div class="flex items-center gap-2 rounded-md border border-neutral-100 bg-neutral-50 px-2 py-1 dark:border-neutral-800 dark:bg-neutral-950">
                             <span class="text-xs font-medium truncate" style="font-family: {font}">{font}</span>
                             <button class="text-neutral-400 hover:text-neutral-900 dark:hover:text-white" onclick={() => copyToClipboard(font, 'Font name')}>
@@ -506,7 +505,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold dark:text-white">Technology Stack</h2>
                       </div>
                       <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {#each report.techStack as tech}
+                        {#each activeReport.techStack as tech}
                           <a 
                             href={tech.website} 
                             target="_blank"
@@ -541,7 +540,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         </div>
                       </div>
                       <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {#each report.dns as record}
+                        {#each activeReport.dns as record}
                           <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
                             <div class="flex flex-col min-w-0">
                               <span class="text-[10px] font-bold uppercase text-neutral-400">{record.type}</span>
@@ -555,7 +554,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       </div>
                     </section>
 
-                    {#if report.assets && report.assets.length > 0}
+                    {#if activeReport.assets && activeReport.assets.length > 0}
                     <!-- Asset Explorer Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                       <div class="mb-4 flex items-center gap-2">
@@ -563,14 +562,14 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold dark:text-white">Asset Explorer</h2>
                       </div>
                       <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-950/50 max-h-[400px] overflow-y-auto font-mono">
-                        {#each report.assets as node}
+                        {#each activeReport.assets as node}
                           {@render assetItem(node)}
                         {/each}
                       </div>
                     </section>
                     {/if}
 
-                    {#if report.subdomains && report.subdomains.length > 0}
+                    {#if activeReport.subdomains && activeReport.subdomains.length > 0}
                     <!-- Subdomains Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                       <div class="mb-4 flex items-center gap-2">
@@ -578,7 +577,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold dark:text-white">Subdomains</h2>
                       </div>
                       <div class="flex flex-wrap gap-2">
-                        {#each report.subdomains as sub}
+                        {#each activeReport.subdomains as sub}
                           <a 
                             href={sub.url} 
                             target="_blank"
@@ -592,7 +591,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                     </section>
                     {/if}
 
-                    {#if report.redFlags && report.redFlags.length > 0}
+                    {#if activeReport.redFlags && activeReport.redFlags.length > 0}
                     <!-- Red Flags Card -->
                     <section class="rounded-2xl border border-red-100 bg-red-50/30 p-6 dark:border-red-900/20 dark:bg-red-900/5">
                       <div class="mb-4 flex items-center gap-2">
@@ -600,7 +599,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold text-red-900 dark:text-red-400">Critical Red Flags</h2>
                       </div>
                       <div class="space-y-3">
-                        {#each report.redFlags as flag}
+                        {#each activeReport.redFlags as flag}
                           <div class="flex items-start gap-3 rounded-xl bg-white p-3 shadow-sm dark:bg-neutral-900 border border-red-100 dark:border-red-900/30">
                             <div class="mt-0.5 rounded-full bg-red-100 p-1 dark:bg-red-900/30">
                               <AlertCircle size={12} class="text-red-600 dark:text-red-400" />
@@ -632,14 +631,14 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                           <div class="grid grid-cols-2 gap-2">
                             <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-950">
                               <span class="text-xs font-medium dark:text-white">SPF</span>
-                              <Badge variant="outline" class="text-[8px] h-3.5 uppercase {report.emailSecurity.spf ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}">
-                                {report.emailSecurity.spf ? 'Enabled' : 'Missing'}
+                              <Badge variant="outline" class="text-[8px] h-3.5 uppercase {activeReport.emailSecurity.spf ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}">
+                                {activeReport.emailSecurity.spf ? 'Enabled' : 'Missing'}
                               </Badge>
                             </div>
                             <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-950">
                               <span class="text-xs font-medium dark:text-white">DMARC</span>
-                              <Badge variant="outline" class="text-[8px] h-3.5 uppercase {report.emailSecurity.dmarc ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}">
-                                {report.emailSecurity.dmarc ? 'Enabled' : 'Missing'}
+                              <Badge variant="outline" class="text-[8px] h-3.5 uppercase {activeReport.emailSecurity.dmarc ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}">
+                                {activeReport.emailSecurity.dmarc ? 'Enabled' : 'Missing'}
                               </Badge>
                             </div>
                           </div>
@@ -657,8 +656,8 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                                 <FileText size={12} class="text-neutral-400" />
                                 <span class="text-xs font-medium dark:text-white">Robots.txt</span>
                               </div>
-                              {#if report.crawling.robots}
-                                <a href={report.crawling.robots} target="_blank" class="text-[10px] text-blue-500 hover:underline">View File</a>
+                              {#if activeReport.crawling.robots}
+                                <a href={activeReport.crawling.robots} target="_blank" class="text-[10px] text-blue-500 hover:underline">View File</a>
                               {:else}
                                 <Badge variant="outline" class="text-[8px] h-3.5 uppercase bg-red-500/10 text-red-600 border-red-500/20">Not Found</Badge>
                               {/if}
@@ -668,8 +667,8 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                                 <MapIcon size={12} class="text-neutral-400" />
                                 <span class="text-xs font-medium dark:text-white">Sitemap</span>
                               </div>
-                              {#if report.crawling.sitemap}
-                                <a href={report.crawling.sitemap} target="_blank" class="text-[10px] text-blue-500 hover:underline truncate max-w-[80px]">View Map</a>
+                              {#if activeReport.crawling.sitemap}
+                                <a href={activeReport.crawling.sitemap} target="_blank" class="text-[10px] text-blue-500 hover:underline truncate max-w-[80px]">View Map</a>
                               {:else}
                                 <Badge variant="outline" class="text-[8px] h-3.5 uppercase bg-red-500/10 text-red-600 border-red-500/20">Not Found</Badge>
                               {/if}
@@ -686,7 +685,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold dark:text-white">Safety check</h2>
                       </div>
                       <div class="space-y-2">
-                        {#each report.security as header}
+                        {#each activeReport.security as header}
                           <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
                             <span class="text-xs font-medium dark:text-white">{header.name}</span>
                             <Badge 
@@ -700,7 +699,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       </div>
                     </section>
 
-                    {#if report.ssl}
+                    {#if activeReport.ssl}
                     <!-- SSL Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                       <div class="mb-4 flex items-center gap-2">
@@ -710,23 +709,23 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <div class="space-y-3">
                         <div class="flex flex-col">
                           <span class="text-[10px] uppercase text-neutral-400 font-bold">Issuer</span>
-                          <span class="text-xs dark:text-white">{report.ssl.issuer}</span>
+                          <span class="text-xs dark:text-white">{activeReport.ssl.issuer}</span>
                         </div>
                         <div class="flex flex-col">
                           <span class="text-[10px] uppercase text-neutral-400 font-bold">Valid Until</span>
-                          <span class="text-xs {report.ssl.isExpired ? 'text-red-500' : 'dark:text-white'}">
-                            {new Date(report.ssl.validTo).toLocaleDateString()}
+                          <span class="text-xs {activeReport.ssl.isExpired ? 'text-red-500' : 'dark:text-white'}">
+                            {new Date(activeReport.ssl.validTo).toLocaleDateString()}
                           </span>
                         </div>
                         <Badge variant="outline" class="w-full justify-center text-[10px] py-1 border-green-500/20 bg-green-500/5 text-green-600">
-                          {report.ssl.protocol}
+                          {activeReport.ssl.protocol}
                         </Badge>
                         
-                        {#if report.ssl.sans && report.ssl.sans.length > 0}
+                        {#if activeReport.ssl.sans && activeReport.ssl.sans.length > 0}
                         <div class="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
                           <span class="mb-2 block text-[10px] uppercase text-neutral-400 font-bold tracking-wider text-center">Associated Domains (SAN)</span>
                           <div class="flex flex-wrap justify-center gap-1">
-                            {#each report.ssl.sans as san}
+                            {#each activeReport.ssl.sans as san}
                               <span class="rounded bg-neutral-100 px-1.5 py-0.5 text-[9px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
                                 {san}
                               </span>
@@ -738,7 +737,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                     </section>
                     {/if}
 
-                    {#if report.performance}
+                    {#if activeReport.performance}
                     <!-- Performance Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                       <div class="mb-4 flex items-center gap-2">
@@ -748,21 +747,21 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <div class="grid grid-cols-2 gap-4">
                         <div class="flex flex-col">
                           <span class="text-[10px] uppercase text-neutral-400 font-bold tracking-wider">Page Size</span>
-                          <span class="text-sm font-medium dark:text-white">{report.performance.pageSize} KB</span>
+                          <span class="text-sm font-medium dark:text-white">{activeReport.performance.pageSize} KB</span>
                         </div>
                         <div class="flex flex-col">
                           <span class="text-[10px] uppercase text-neutral-400 font-bold tracking-wider">DOM Nodes</span>
-                          <span class="text-sm font-medium dark:text-white">{report.performance.domNodes}</span>
+                          <span class="text-sm font-medium dark:text-white">{activeReport.performance.domNodes}</span>
                         </div>
                         <div class="flex flex-col">
                           <span class="text-[10px] uppercase text-neutral-400 font-bold tracking-wider">Compression</span>
-                          <span class="text-xs dark:text-white truncate">{report.performance.compression}</span>
+                          <span class="text-xs dark:text-white truncate">{activeReport.performance.compression}</span>
                         </div>
                       </div>
                     </section>
                     {/if}
 
-                    {#if report.accessibility}
+                    {#if activeReport.accessibility}
                     <!-- Accessibility Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                       <div class="mb-4 flex items-center gap-2">
@@ -773,25 +772,25 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <div class="space-y-2">
                           <div class="flex items-center justify-between">
                             <span class="text-[10px] uppercase text-neutral-400 font-bold">Health Score</span>
-                            <span class="text-xs font-bold text-neutral-900 dark:text-white">{report.accessibility.score}%</span>
+                            <span class="text-xs font-bold text-neutral-900 dark:text-white">{activeReport.accessibility.score}%</span>
                           </div>
                           <div class="h-2 w-full rounded-full bg-neutral-100 dark:bg-neutral-800 p-0.5 shadow-inner">
                             <div 
                               class="h-full rounded-full bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-400 dark:from-white dark:via-neutral-200 dark:to-neutral-400 transition-all duration-1000 shadow-sm" 
-                              style="width: {report.accessibility.score}%"
+                              style="width: {activeReport.accessibility.score}%"
                             ></div>
                           </div>
                         </div>
                         <div class="grid grid-cols-1 gap-2">
                           <div class="flex items-center justify-between text-xs">
                             <span class="text-neutral-500">Missing Alt Tags</span>
-                            <span class={report.accessibility.missingAltTags > 0 ? 'text-red-500' : 'text-green-500'}>
-                              {report.accessibility.missingAltTags}
+                            <span class={activeReport.accessibility.missingAltTags > 0 ? 'text-red-500' : 'text-green-500'}>
+                              {activeReport.accessibility.missingAltTags}
                             </span>
                           </div>
                           <div class="flex items-center justify-between text-xs">
                             <span class="text-neutral-500">ARIA Support</span>
-                            <span class="dark:text-white">{report.accessibility.hasAriaLabels ? 'Detected' : 'None'}</span>
+                            <span class="dark:text-white">{activeReport.accessibility.hasAriaLabels ? 'Detected' : 'None'}</span>
                           </div>
                         </div>
                       </div>
@@ -806,16 +805,16 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       <div class="space-y-4">
                         <div class="overflow-hidden">
                           <span class="mb-1 block text-[10px] font-medium text-neutral-500 uppercase tracking-wider">Meta Title</span>
-                          <p class="break-words text-xs leading-relaxed font-medium dark:text-neutral-200">{report.title}</p>
+                          <p class="break-words text-xs leading-relaxed font-medium dark:text-neutral-200">{activeReport.title}</p>
                         </div>
                         <Separator />
                         <div>
                           <span class="mb-1 block text-[10px] font-medium text-neutral-500 uppercase tracking-wider">Description</span>
                           <div class="relative">
                             <p class="text-xs leading-relaxed text-neutral-600 line-clamp-3 dark:text-neutral-400">
-                              {report.description || 'No description detected.'}
+                              {activeReport.description || 'No description detected.'}
                             </p>
-                            {#if report.description && report.description.length > 150}
+                            {#if activeReport.description && activeReport.description.length > 150}
                               <button 
                                 onclick={() => showFullDesc = true}
                                 class="mt-1 text-[10px] font-semibold text-neutral-900 underline-offset-4 hover:underline dark:text-white"
@@ -823,7 +822,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                                 View full description
                               </button>
                             {/if}
-                            {#if !report.description}
+                            {#if !activeReport.description}
                                <p class="text-[10px] italic text-neutral-400">No meta description found on this page.</p>
                             {/if}
                           </div>
@@ -853,7 +852,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                             </Button>
                           </div>
                           <p class="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-                            {report.description}
+                            {activeReport.description}
                           </p>
                           <div class="mt-6 flex justify-end">
                             <Button variant="default" size="sm" onclick={() => showFullDesc = false}>Close</Button>
@@ -862,7 +861,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                       </div>
                     {/if}
 
-                    {#if report.socialLinks && report.socialLinks.length > 0}
+                    {#if activeReport.socialLinks && activeReport.socialLinks.length > 0}
                     <!-- Socials Card -->
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
                       <div class="mb-4 flex items-center gap-2">
@@ -870,7 +869,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                         <h2 class="text-lg font-semibold dark:text-white">Social Links</h2>
                       </div>
                       <div class="grid grid-cols-1 gap-2">
-                        {#each report.socialLinks as social}
+                        {#each activeReport.socialLinks as social}
                           <a 
                             href={social.url} 
                             target="_blank"
