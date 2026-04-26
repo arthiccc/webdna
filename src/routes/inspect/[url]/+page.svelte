@@ -137,11 +137,23 @@
     });
   });
 
-  // Helper to handle image load errors with typing
+  // Helper to handle image load errors with robust fallbacks
   const handleImageError = (e: Event) => {
     const target = e.currentTarget as HTMLImageElement;
-    if (report && !target.src.includes('google.com')) {
-      target.src = `https://www.google.com/s2/favicons?domain=${report.domain}&sz=128`;
+    const domain = report?.domain || activeReport?.domain;
+    if (!domain) return;
+
+    if (!target.src.includes('google.com')) {
+      target.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    } else if (!target.src.includes('duckduckgo.com')) {
+      target.src = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+    } else {
+      // If all else fails, hide and show a generic fallback icon
+      target.style.display = 'none';
+      const container = target.parentElement;
+      if (container) {
+        container.innerHTML = '<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe text-neutral-400"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>';
+      }
     }
   };
 
@@ -607,14 +619,14 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
                               <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
                                 <div class="flex flex-col">
                                   <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Heading</span>
-                                  <span class="text-sm font-bold dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[0] || 'Inter'}</span>
+                                  <span class="text-sm font-bold dark:text-white truncate md:whitespace-normal md:max-w-none" style="font-family: {activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[0] || 'Inter'}</span>
                                 </div>
                                 <span class="text-xl font-serif dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
                               </div>
                               <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
                                 <div class="flex flex-col">
                                   <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Body</span>
-                                  <span class="text-sm font-medium dark:text-white truncate max-w-[120px]" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
+                                  <span class="text-sm font-medium dark:text-white truncate md:whitespace-normal md:max-w-none" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
                                 </div>
                                 <span class="text-xl font-sans dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
                               </div>
@@ -1333,7 +1345,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
           <a 
             href={provider.website} 
             target="_blank" 
-            class="inline-flex items-center gap-2 px-4 py-2 bg-[#7bc5e4] text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#7bc5e4]/20"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#1e3a8a]/20"
           >
             Visit Website
             <ExternalLinkIcon size={12} />
