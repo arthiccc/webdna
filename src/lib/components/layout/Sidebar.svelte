@@ -61,7 +61,17 @@
             class="flex items-center space-x-2 rounded-md px-2 py-1.5 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
           >
             <div class="h-4 w-4 overflow-hidden rounded-[4px] border border-neutral-200 bg-white p-[1px] dark:border-neutral-800 dark:bg-neutral-900">
-              <img src={item.favicon} alt="" class="h-full w-full object-contain" />
+              <img 
+                src={item.favicon} 
+                alt="" 
+                class="h-full w-full object-contain" 
+                onerror={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('google.com')) {
+                    target.src = `https://www.google.com/s2/favicons?domain=${item.domain}&sz=64`;
+                  }
+                }}
+              />
             </div>
             <span class="truncate">{item.name}</span>
           </a>

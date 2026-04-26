@@ -70,7 +70,17 @@
                   <div class="flex flex-1 flex-col p-5">
                     <div class="mb-2 flex items-center gap-3">
                       <div class="h-8 w-8 overflow-hidden rounded-lg border border-neutral-100 bg-white p-1 dark:border-neutral-800">
-                        <img src={report.favicon} alt="" class="h-full w-full object-contain" />
+                        <img 
+                          src={report.favicon} 
+                          alt="" 
+                          class="h-full w-full object-contain" 
+                          onerror={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.src.includes('google.com')) {
+                              target.src = `https://www.google.com/s2/favicons?domain=${report.domain}&sz=128`;
+                            }
+                          }}
+                        />
                       </div>
                       <h3 class="font-bold tracking-tight dark:text-white">{report.name}</h3>
                     </div>
