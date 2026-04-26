@@ -341,9 +341,25 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   });
 
   // 6. Fonts (Extreme Precision Detection)
-  const fonts: string[] = [];
   const foundFonts = new Set<string>();
   
+  const commonSystem = [
+    'inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 
+    '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 
+    'Arial', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Impact',
+    'var(', '--font', 'ui-sans-serif', 'ui-serif', 'ui-monospace'
+  ];
+
+  const isTechnicalName = (name: string) => {
+    // Detect hashes (e.g., 051df43942b70a0f183e)
+    if (/^[a-f0-9]{12,}$/i.test(name.replace(/[-_]/g, ''))) return true;
+    // Detect long random-looking strings
+    if (name.length > 15 && !name.includes(' ') && !/[aeiouy]{1,}/i.test(name)) return true;
+    // Detect CSS variables
+    if (name.startsWith('var(') || name.startsWith('--')) return true;
+    return false;
+  };
+
   // A. Check Google Fonts (Highest Confidence)
   $('link[href*="fonts.googleapis.com"], link[href*="fonts.gstatic.com"]').each((_, el) => {
     const href = $(el).attr('href') || '';
@@ -351,37 +367,6 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     if (fontNames) {
       fontNames.forEach(f => {
         const name = f.replace('family=', '').replace(/\+/g, ' ').split(':')[0].split(',')[0];
-        if (name && name.length > 1) foundFonts.add(name);
-      });
-    }
-  });
-
-  // B. Check Preloaded/Linked Font Files (.woff2, .woff, .ttf)
-  $('[src], link[href]').each((_, el) => {
-    const url = $(el).attr('src') || $(el).attr('href') || '';
-    const fileMatch = url.match(/\/([^\/\s]+)\.(woff2|woff|ttf|otf)(\?.*)?$/i);
-    if (fileMatch) {
-      const fileName = fileMatch[1].replace(/[-_]/g, ' ');
-      // Clean up common suffixes
-      const cleanName = fileName.replace(/(regular|bold|italic|medium|light|thin|variable|subset|webfont)/gi, '').trim();
-      if (cleanName && cleanName.length > 2) {
-        // Capitalize words
-        const capitalized = cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        foundFonts.add(capitalized);
-      }
-    }
-  });
-
-  // C. Deep CSS Scan for font-family & @font-face
-  $('style').each((_, el) => {
-    const styleContent = $(el).html();
-    
-    // Look for @font-face names
-    const fontFaceMatches = styleContent.match(/font-family:\s*["']?([^;,"'}]+)["']?/gi);
-    if (fontFaceMatches) {
-      fontFaceMatches.forEach(match => {
-        const name = match.replace(/font-family:\s*/i, '').replace(/["']/g, '').split(',')[0].trim();
-        const commonSystem = ['inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Impact'];
         if (name && name.length > 1 && !commonSystem.some(sys => name.toLowerCase().includes(sys.toLowerCase()))) {
           foundFonts.add(name);
         }
@@ -389,9 +374,58 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     }
   });
 
+  // B. CSS Deep Scan for @font-face & Variables
+  const cssBlocks: string[] = [];
+  $('style').each((_, el) => { cssBlocks.push($(el).html()); });
+  
+  cssBlocks.forEach(styleContent => {
+    // 1. Resolve @font-face names (The most accurate source for custom fonts)
+    const fontFaceMatches = styleContent.match(/font-family:\s*["']?([^;,"'}]+)["']?/gi);
+    if (fontFaceMatches) {
+      fontFaceMatches.forEach(match => {
+        const name = match.replace(/font-family:\s*/i, '').replace(/["']/g, '').split(',')[0].trim();
+        if (name && name.length > 1 && !isTechnicalName(name) && !commonSystem.some(sys => name.toLowerCase().includes(sys.toLowerCase()))) {
+          foundFonts.add(name);
+        }
+      });
+    }
+
+    // 2. Try to resolve CSS variables used for fonts (e.g., --font-sans: "Inter")
+    const varMatches = styleContent.match(/--[\w-]+:\s*["']?([^;,"'{}!]+)["']?/gi);
+    if (varMatches) {
+      varMatches.forEach(match => {
+        if (match.toLowerCase().includes('font')) {
+          const val = match.split(':')[1].replace(/["']/g, '').split(',')[0].trim();
+          if (val && val.length > 2 && !isTechnicalName(val) && !commonSystem.some(sys => val.toLowerCase().includes(sys.toLowerCase()))) {
+            foundFonts.add(val);
+          }
+        }
+      });
+    }
+  });
+
+  // C. Check Linked Font Files (Lower confidence, strictly filtered)
+  $('[src], link[href]').each((_, el) => {
+    const url = $(el).attr('src') || $(el).attr('href') || '';
+    const fileMatch = url.match(/\/([^\/\s]+)\.(woff2|woff|ttf|otf)(\?.*)?$/i);
+    if (fileMatch) {
+      const fileName = fileMatch[1].replace(/[-_]/g, ' ');
+      // Clean up common suffixes
+      const cleanName = fileName.replace(/(regular|bold|italic|medium|light|thin|variable|subset|webfont|latin)/gi, '').trim();
+      
+      if (cleanName && cleanName.length > 2 && !isTechnicalName(cleanName)) {
+        // Capitalize words
+        const capitalized = cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        if (!commonSystem.some(sys => capitalized.toLowerCase().includes(sys.toLowerCase()))) {
+          foundFonts.add(capitalized);
+        }
+      }
+    }
+  });
+
   // D. Filter and Sort
   const finalFonts = Array.from(foundFonts)
-    .filter(f => f.length > 2 && f.length < 30)
+    .filter(f => f.length > 2 && f.length < 35)
     .slice(0, 5);
 
 
