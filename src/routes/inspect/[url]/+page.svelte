@@ -237,22 +237,22 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 
 <svelte:head>
   {#if report}
-    <title>Siteglow — {report.name}</title>
-    <meta name="description" content={report.description || `Inspection report for ${report.domain}. Discover technology stack, branding, and performance.`} />
+    <title>{report.name}</title>
+    <meta name="description" content={report.description || `Inspection report for ${report.domain}.`} />
     
     <!-- OpenGraph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Siteglow — {report.name}" />
+    <meta property="og:title" content={report.name} />
     <meta property="og:description" content={report.description || `Inspection report for ${report.domain}.`} />
-    <meta property="og:image" content={report.favicon} />
+    <meta property="og:image" content={report.ogImage || report.favicon} />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary" />
-    <meta property="twitter:title" content="Siteglow — {report.name}" />
+    <meta property="twitter:title" content={report.name} />
     <meta property="twitter:description" content={report.description || `Inspection report for ${report.domain}.`} />
-    <meta property="twitter:image" content={report.favicon} />
+    <meta property="twitter:image" content={report.ogImage || report.favicon} />
   {:else}
-    <title>Siteglow — Inspecting...</title>
+    <title>Inspecting...</title>
   {/if}
 </svelte:head>
 
