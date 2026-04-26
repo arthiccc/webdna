@@ -18,7 +18,7 @@
 <ModeWatcher />
 <Toaster 
   position="bottom-right" 
-  theme="inherit" 
+  theme="system" 
   richColors 
   closeButton
   visibleToasts={1}

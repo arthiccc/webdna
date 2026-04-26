@@ -182,13 +182,19 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
   
   // Advanced Favicon Detection
-  const faviconAttr = 
-    $('link[rel="apple-touch-icon"]').attr('href') ||
-    $('link[rel="icon"]').attr('href') ||
-    $('link[rel="shortcut icon"]').attr('href') ||
-    $('link[rel*="icon"]').attr('href');
+  let favicon = '';
+  const appleTouchIcon = $('link[rel="apple-touch-icon"]').attr('href');
+  const icon = $('link[rel="icon"]').attr('href');
+  const shortcutIcon = $('link[rel="shortcut icon"]').attr('href');
+  
+  const faviconPath = appleTouchIcon || icon || shortcutIcon;
     
-  let favicon = faviconAttr ? new URL(faviconAttr, finalUrl).href : `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  if (faviconPath) {
+    favicon = new URL(faviconPath, finalUrl).href;
+  } else {
+    // Fallback to root favicon.ico which most sites have
+    favicon = `https://${domain}/favicon.ico`;
+  }
   
   // 2. Logo Detection
   const ogImage = $('meta[property="og:image"]').attr('content');
@@ -269,7 +275,14 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     // Payments & Services
     { name: 'Stripe', category: 'Payments', pattern: /js\.stripe\.com/, website: 'https://stripe.com' },
     { name: 'Intercom', category: 'Support', pattern: /intercom\.io/, website: 'https://intercom.com' },
-    { name: 'Sentry', category: 'Monitoring', pattern: /sentry\.io/, website: 'https://sentry.io' }
+    { name: 'Sentry', category: 'Monitoring', pattern: /sentry\.io/, website: 'https://sentry.io' },
+    { name: 'HubSpot', category: 'Marketing', pattern: /js\.hs-scripts\.com|hubspot\.com/, website: 'https://hubspot.com' },
+    { name: 'Facebook Pixel', category: 'Marketing', pattern: /connect\.facebook\.net\/en_US\/fbevents\.js/, website: 'https://facebook.com' },
+    
+    // Fonts & CDNs
+    { name: 'Google Fonts', category: 'Fonts', pattern: /fonts\.googleapis\.com/, website: 'https://fonts.google.com' },
+    { name: 'Adobe Fonts', category: 'Fonts', pattern: /use\.typekit\.net/, website: 'https://fonts.adobe.com' },
+    { name: 'Akamai', category: 'CDN', pattern: /akamai|akamaized\.net/, website: 'https://akamai.com' }
   ];
 
   const serverHeader = response.headers.get('Server') || '';
@@ -422,6 +435,13 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
       score: finalA11yScore,
       missingAltTags: missingAlt,
       hasAriaLabels: $('[aria-label], [role]').length > 0
+    },
+    language: $('html').attr('lang') || 'en',
+    themeColor: $('meta[name="theme-color"]').attr('content'),
+    headings: {
+      h1: h1Count,
+      h2: $('h2').length,
+      h3: $('h3').length
     },
     assets: buildAssetTree($, finalUrl),
     updatedAt: new Date().toISOString()

@@ -4,8 +4,26 @@ import { scanUrl, getNetworkOnlyReport } from '$lib/server/scanner';
 export const load: PageServerLoad = async ({ params }) => {
   const url = decodeURIComponent(params.url);
   
+  // Basic URL validation to prevent 500 errors on typos like "fmhy..net"
+  let domain = url;
+  try {
+    const tempUrl = url.startsWith('http') ? url : `https://${url}`;
+    const urlObj = new URL(tempUrl);
+    domain = urlObj.hostname;
+    // Check for double dots or other common typos in the domain
+    if (domain.includes('..') || !domain.includes('.')) {
+      throw new Error("Invalid domain name format.");
+    }
+  } catch (e) {
+    return {
+      streamed: {
+        report: Promise.reject(new Error(`"${url}" is not a valid website URL. Please check for typos like double dots.`))
+      },
+      url
+    };
+  }
+  
   // We don't await the scan here. We return a promise so SvelteKit streams it.
-  // This allows instant navigation while the server works in the background.
   const fetchReport = async () => {
     try {
       console.log(`[page.server.ts] Starting background scan for URL: ${url}`);

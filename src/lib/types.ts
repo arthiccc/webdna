@@ -95,6 +95,13 @@ export interface SiteReport {
   performance?: PerformanceMetrics;
   accessibility?: AccessibilityMetrics;
   assets?: AssetNode[];
+  language?: string;
+  themeColor?: string;
+  headings?: {
+    h1: number;
+    h2: number;
+    h3: number;
+  };
   updatedAt: string;
 }
 
@@ -119,6 +126,12 @@ export const mockReports: Record<string, SiteReport> = {
       { platform: "Twitter", url: "https://twitter.com/linear" },
       { platform: "GitHub", url: "https://github.com/linear" }
     ],
+    dns: [],
+    subdomains: [],
+    redFlags: [],
+    security: [],
+    emailSecurity: { spf: true, dmarc: true },
+    crawling: {},
     updatedAt: new Date().toISOString()
   },
   "stripe.com": {
@@ -138,6 +151,12 @@ export const mockReports: Record<string, SiteReport> = {
       { platform: "Twitter", url: "https://twitter.com/stripe" },
       { platform: "LinkedIn", url: "https://linkedin.com/company/stripe" }
     ],
+    dns: [],
+    subdomains: [],
+    redFlags: [],
+    security: [],
+    emailSecurity: { spf: true, dmarc: true },
+    crawling: {},
     updatedAt: new Date().toISOString()
   }
 };

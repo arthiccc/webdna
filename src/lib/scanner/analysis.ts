@@ -14,6 +14,27 @@ export function analyzeHtml(html: string, finalUrl: string, domain: string): Par
                    html.match(/<meta[^>]*content=["'](.*?)["'][^>]*name=["']description["']/i);
   const description = descMatch ? descMatch[1] : '';
 
+  const langMatch = html.match(/<html[^>]*lang=["'](.*?)["']/i);
+  const language = langMatch ? langMatch[1] : 'en';
+
+  const themeMatch = html.match(/<meta[^>]*name=["']theme-color["'][^>]*content=["'](.*?)["']/i);
+  const themeColor = themeMatch ? themeMatch[1] : '';
+
+  // Extract Heading structure
+  const h1Count = (html.match(/<h1\b/gi) || []).length;
+  const h2Count = (html.match(/<h2\b/gi) || []).length;
+  const h3Count = (html.match(/<h3\b/gi) || []).length;
+
+  // Extract Fonts (basic detection from stylesheets or @font-face)
+  const fonts: string[] = [];
+  const fontMatches = html.match(/family=([^&"'>\s]+)/g);
+  if (fontMatches) {
+    fontMatches.forEach(f => {
+      const name = f.replace('family=', '').replace(/\+/g, ' ');
+      if (!fonts.includes(name)) fonts.push(name);
+    });
+  }
+
   // Tech Stack
   const techStack: TechStack[] = [];
   for (const rule of techRules) {
@@ -54,5 +75,9 @@ export function analyzeHtml(html: string, finalUrl: string, domain: string): Par
     techStack,
     socialLinks,
     brandColors: brandColors.length > 0 ? brandColors : ['#000000', '#ffffff'],
+    language,
+    themeColor,
+    headings: { h1: h1Count, h2: h2Count, h3: h3Count },
+    fonts: fonts.length > 0 ? fonts : ['System Default']
   };
 }
