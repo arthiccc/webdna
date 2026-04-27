@@ -25,27 +25,55 @@ export function analyzeHtml(html: string, finalUrl: string, domain: string): Par
   const h2Count = (html.match(/<h2\b/gi) || []).length;
   const h3Count = (html.match(/<h3\b/gi) || []).length;
 
-  // Extract Fonts (Enhanced regex detection)
+  // Extract Fonts (Enhanced detection)
   const fonts: string[] = [];
   
-  // Google Fonts
-  const fontMatches = html.match(/family=([^&"'>\s]+)/g);
-  if (fontMatches) {
-    fontMatches.forEach(f => {
-      const name = f.replace('family=', '').replace(/\+/g, ' ').split(':')[0];
-      if (!fonts.includes(name)) fonts.push(name);
+  // 1. Google Fonts
+  const googleFontMatches = html.match(/(?:family=)([^&"'>\s]+)/g);
+  if (googleFontMatches) {
+    googleFontMatches.forEach(f => {
+      const name = f.replace('family=', '').replace(/\+/g, ' ').split(':')[0].trim();
+      if (name && !fonts.includes(name)) fonts.push(name);
     });
   }
 
-  // Generic CSS matches
-  const cssFonts = html.match(/font-family:\s*["']?([^;,"'}]+)["']?/gi);
-  if (cssFonts) {
-    cssFonts.forEach(match => {
-      const name = match.replace(/font-family:\s*/i, '').replace(/["']/g, '').split(',')[0].trim();
-      const commonSystem = ['inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial'];
-      if (name && !fonts.includes(name) && !commonSystem.includes(name)) {
-        fonts.push(name);
+  // 2. Adobe Fonts (Typekit)
+  const adobeFontMatches = html.match(/use\.typekit\.net\/([^.]+)\.css/g);
+  if (adobeFontMatches) {
+    // Adobe fonts are usually loaded via a kit ID, but we can search for the font-family in the CSS if we had it.
+    // For now, we'll mark it as a generic "Adobe Fonts" or try to find font-family in the same HTML
+    fonts.push('Adobe Font');
+  }
+
+  // 3. CSS font-family (in style tags or inline)
+  const cssFontMatches = html.match(/font-family\s*:\s*([^;!}\n]+)/gi);
+  if (cssFontMatches) {
+    cssFontMatches.forEach(match => {
+      const name = match.split(':')[1].split(',').map(f => f.replace(/["']/g, '').trim());
+      const commonSystem = ['inherit', 'initial', 'unset', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Verdana', 'Georgia', 'Times New Roman', 'Trebuchet MS'];
+      
+      for (let n of name) {
+        // Validation: No hashes, no weird technical names, no too short/long
+        const isHash = /^[a-f0-9.-]{8,}$/i.test(n) || /[0-9]{5,}/.test(n);
+        const isTooShort = n.length < 3;
+        const isTooLong = n.length > 40;
+        const isTechnical = n.includes('.') || n.includes('_') || n.includes('#');
+
+        if (n && !fonts.includes(n) && !isHash && !isTooShort && !isTooLong && !isTechnical && 
+            !commonSystem.some(sys => n.toLowerCase() === sys.toLowerCase())) {
+          fonts.push(n);
+          break;
+        }
       }
+    });
+  }
+
+  // 4. @font-face detection
+  const fontFaceMatches = html.match(/font-family\s*:\s*["']?([^;,"'}]+)["']?\s*;\s*src/gi);
+  if (fontFaceMatches) {
+    fontFaceMatches.forEach(match => {
+      const name = match.split(':')[1].split(';')[0].replace(/["']/g, '').trim();
+      if (name && !fonts.includes(name)) fonts.push(name);
     });
   }
 

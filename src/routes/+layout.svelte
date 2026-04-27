@@ -15,15 +15,15 @@
   {/if}
 </svelte:head>
 
-<ModeWatcher />
+<ModeWatcher defaultMode="dark" />
 <Toaster 
   position="bottom-right" 
-  theme="system" 
+  theme="dark" 
   richColors 
   closeButton
   visibleToasts={1}
   toastOptions={{
-    class: 'group !bg-white dark:!bg-neutral-900 !border-neutral-200 dark:!border-neutral-800 !shadow-[0_20px_50px_rgba(0,0,0,0.1)] !rounded-[1.25rem] !px-4 !py-3 !font-medium !text-sm',
+    class: 'group !bg-white dark:!bg-neutral-900 !border-neutral-200 dark:!border-neutral-800 !shadow-[0_20px_50px_rgba(0,0,0,0.1)] !rounded-none !px-4 !py-3 !font-medium !text-sm',
     descriptionClass: '!text-neutral-500 !text-xs'
   }}
 />

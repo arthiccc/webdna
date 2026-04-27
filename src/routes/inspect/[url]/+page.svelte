@@ -1,247 +1,298 @@
 <script lang="ts">
-  import { cn } from '$lib/utils';
-  import { onMount } from 'svelte';
-  import { fade, fly } from 'svelte/transition';
-  import { history, favorites, addToHistory, toggleFavorite } from '$lib/stores/appState';
-  import { page } from '$app/state';
-  import type { PageData } from './$types';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Button } from '$lib/components/ui/button';
-  import { Separator } from '$lib/components/ui/separator';
-  // Vercel Build Trigger: 2026-04-26T20:13
-  import { toast } from 'svelte-sonner';
-  import { Copy as CopyIcon, ExternalLink as ExternalLinkIcon, Palette as PaletteIcon, Type as TypeIcon, Info as InfoIcon, Layers as LayersIcon, Share as ShareIcon, Download as DownloadIcon, Code as CodeIcon, Star as StarIcon, Globe, ShieldCheck, Lock as LockIcon, Activity as ActivityIcon, Map as MapIcon, AlertCircle, Server, MapPin, Zap, Gauge, Folder, File, ChevronRight, ChevronDown, FileImage, FileCode, Mail, Bot, FileText, Fingerprint, Dna, Loader2, X as CloseIcon } from "@lucide/svelte";
-  import { analyzeHtml } from '$lib/scanner/analysis';
-  import { findProvider } from '$lib/data/providers';
+	import { cn } from '$lib/utils';
+	import { fade, fly } from 'svelte/transition';
+	import { history, favorites, addToHistory, toggleFavorite } from '$lib/stores/appState';
+	import { page } from '$app/state';
+	import type { PageData } from './$types';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import { Separator } from '$lib/components/ui/separator';
+	// Vercel Build Trigger: 2026-04-26T20:13
+	import { toast } from 'svelte-sonner';
+	import {
+		Copy as CopyIcon,
+		ExternalLink as ExternalLinkIcon,
+		Palette as PaletteIcon,
+		Type as TypeIcon,
+		Info as InfoIcon,
+		Layers as LayersIcon,
+		Share as ShareIcon,
+		Download as DownloadIcon,
+		Code as CodeIcon,
+		Star as StarIcon,
+		Globe,
+		ShieldCheck,
+		Activity as ActivityIcon,
+		Map as MapIcon,
+		AlertCircle,
+		Server,
+		MapPin,
+		Zap,
+		Gauge,
+		Folder,
+		File,
+		ChevronRight,
+		ChevronDown,
+		FileImage,
+		FileCode,
+		Mail,
+		FileText,
+		Fingerprint,
+		Dna,
+		Loader2,
+		Search as SearchIcon,
+		X as CloseIcon
+	} from '@lucide/svelte';
+	import WhoisScanner from '$lib/components/whois/WhoisScanner.svelte';
+	import { analyzeHtml } from '$lib/scanner/analysis';
+	import { findProvider } from '$lib/data/providers';
 
-  let { data } = $props<{ data: PageData }>();
-  let showFullDesc = $state(false);
-  let isMapOpen = $state(false);
-  let isProviderModalOpen = $state(false);
-  let clientReport = $state<any>(null);
-  let clientError = $state<string | null>(null);
-  let isScanningClient = $state(false);
-  let serverReportResolved = $state<any>(null);
-  
-  // Asset Viewer state
-  let selectedAsset = $state<any>(null);
-  let assetContent = $state<string>('');
-  let isAssetLoading = $state(false);
-  let assetError = $state(false);
+	let { data } = $props<{ data: PageData }>();
+	let showFullDesc = $state(false);
+	let isMapOpen = $state(false);
+	let isProviderModalOpen = $state(false);
+	let clientReport = $state<any>(null);
+	let clientError = $state<string | null>(null);
+	let isScanningClient = $state(false);
+	let serverReportResolved = $state<any>(null);
 
-  function formatAndHighlight(code: string, type: string) {
-    if (!code) return '';
-    
-    // Simple prettifier for minified code
-    let formatted = code;
-    if (type === 'script' || type === 'style') {
-      formatted = code
-        .replace(/([{};])/g, '$1\n')
-        .replace(/\n\s*\n/g, '\n')
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .join('\n');
-      
-      // Basic indentation
-      let indent = 0;
-      formatted = formatted.split('\n').map(line => {
-        if (line.includes('}')) indent--;
-        const spaced = '  '.repeat(Math.max(0, indent)) + line;
-        if (line.includes('{')) indent++;
-        return spaced;
-      }).join('\n');
-    }
+	// Asset Viewer state
+	let selectedAsset = $state<any>(null);
+	let assetContent = $state<string>('');
+	let isAssetLoading = $state(false);
+	let assetError = $state(false);
 
-    // Basic Syntax Highlighting (Regex based)
-    // Escaping HTML
-    let html = formatted
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+	function formatAndHighlight(code: string, type: string) {
+		if (!code) return '';
 
-    if (type === 'script') {
-      html = html
-        .replace(/\b(const|let|var|function|return|if|else|for|while|import|export|from|async|await|const|new|try|catch|finally|class|extends|await)\b/g, '<span class="text-purple-500 font-bold">$1</span>')
-        .replace(/\b(true|false|null|undefined)\b/g, '<span class="text-orange-500 font-bold">$1</span>')
-        .replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-green-500">$1</span>')
-        .replace(/\/\/.*/g, '<span class="text-neutral-500">$1</span>')
-        .replace(/\b(\d+)\b/g, '<span class="text-blue-500">$1</span>');
-    } else if (type === 'style') {
-      html = html
-        .replace(/([a-zA-Z-]+)(?=\s*:)/g, '<span class="text-blue-400 font-bold">$1</span>')
-        .replace(/:([^;]+);/g, ': <span class="text-orange-400">$1</span>;')
-        .replace(/(\.[a-zA-Z0-9_-]+|#[a-zA-Z0-9_-]+|[a-z]+)(?=\s*\{)/g, '<span class="text-yellow-500 font-bold">$1</span>');
-    }
+		// Simple prettifier for minified code
+		let formatted = code;
+		if (type === 'script' || type === 'style') {
+			formatted = code
+				.replace(/([{};])/g, '$1\n')
+				.replace(/\n\s*\n/g, '\n')
+				.split('\n')
+				.map((line) => line.trim())
+				.filter((line) => line.length > 0)
+				.join('\n');
 
-    return html;
-  }
+			// Basic indentation
+			let indent = 0;
+			formatted = formatted
+				.split('\n')
+				.map((line) => {
+					if (line.includes('}')) indent--;
+					const spaced = '  '.repeat(Math.max(0, indent)) + line;
+					if (line.includes('{')) indent++;
+					return spaced;
+				})
+				.join('\n');
+		}
 
-  async function openAsset(asset: any) {
-    if (asset.type === 'folder') return;
-    
-    selectedAsset = asset;
-    assetContent = '';
-    assetError = false;
-    
-    if (asset.fileType === 'script' || asset.fileType === 'style' || asset.fileType === 'document') {
-      isAssetLoading = true;
-      try {
-        const res = await fetch(`/api/proxy-asset?url=${encodeURIComponent(asset.url)}`);
-        if (res.ok) {
-          const raw = await res.text();
-          assetContent = formatAndHighlight(raw, asset.fileType);
-        } else {
-          assetContent = '<span class="text-red-500">// Failed to load asset content.</span>';
-        }
-      } catch (err) {
-        assetContent = '<span class="text-red-500">// Error fetching asset.</span>';
-      } finally {
-        isAssetLoading = false;
-      }
-    }
-  }
-  
-  // Scroll lock effect
-  $effect(() => {
-    if (isMapOpen || selectedAsset || showFullDesc || isProviderModalOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  });
-  
-  // Derive final report and error
-  let report = $derived(clientReport || serverReportResolved);
-  let error = $derived(clientError || data.error);
-  
-  let isFavorite = $derived($favorites.some(f => f.domain === report?.domain));
+		// Basic Syntax Highlighting (Regex based)
+		// Escaping HTML
+		let html = formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-  // Svelte 5 effect to handle history and client-side fallback
-  $effect(() => {
-    const r = data.streamed.report;
-    r.then((reportValue: any) => {
-      serverReportResolved = reportValue;
-      if (reportValue) {
-        if (reportValue.needsClientFetch && !clientReport) {
-           performClientScan();
-        } else if (!reportValue.needsClientFetch) {
-           addToHistory(reportValue);
-        }
-      }
-    }).catch(err => {
-      clientError = err.message || "Failed to scan website";
-    });
-  });
+		if (type === 'script') {
+			html = html
+				.replace(
+					/\b(const|let|var|function|return|if|else|for|while|import|export|from|async|await|const|new|try|catch|finally|class|extends|await)\b/g,
+					'<span class="text-purple-500 font-bold">$1</span>'
+				)
+				.replace(
+					/\b(true|false|null|undefined)\b/g,
+					'<span class="text-orange-500 font-bold">$1</span>'
+				)
+				.replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-green-500">$1</span>')
+				.replace(/\/\/.*/g, '<span class="text-neutral-500">$1</span>')
+				.replace(/\b(\d+)\b/g, '<span class="text-blue-500">$1</span>');
+		} else if (type === 'style') {
+			html = html
+				.replace(/([a-zA-Z-]+)(?=\s*:)/g, '<span class="text-blue-400 font-bold">$1</span>')
+				.replace(/:([^;]+);/g, ': <span class="text-orange-400">$1</span>;')
+				.replace(
+					/(\.[a-zA-Z0-9_-]+|#[a-zA-Z0-9_-]+|[a-z]+)(?=\s*\{)/g,
+					'<span class="text-yellow-500 font-bold">$1</span>'
+				);
+		}
 
-  // Helper to handle image load errors with robust fallbacks
-  const handleImageError = (e: Event) => {
-    const target = e.currentTarget as HTMLImageElement;
-    const domain = report?.domain || activeReport?.domain;
-    if (!domain) return;
+		return html;
+	}
 
-    if (!target.src.includes('google.com')) {
-      target.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-    } else if (!target.src.includes('duckduckgo.com')) {
-      target.src = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
-    } else {
-      // If all else fails, hide and show a generic fallback icon
-      target.style.display = 'none';
-      const container = target.parentElement;
-      if (container) {
-        container.innerHTML = '<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe text-neutral-400"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>';
-      }
-    }
-  };
+	async function openAsset(asset: any) {
+		if (asset.type === 'folder') return;
 
-  async function performClientScan() {
-    isScanningClient = true;
-    clientError = null;
-    const targetUrl = data.url.startsWith('http') ? data.url : `https://${data.url}`;
-    const domain = new URL(targetUrl).hostname;
+		selectedAsset = asset;
+		assetContent = '';
+		assetError = false;
 
-    try {
-      // 1. Try direct fetch (works if CORS is open)
-      let html = '';
-      let usedProxy = false;
-      
-      try {
-        const res = await fetch(targetUrl);
-        if (res.ok) {
-          html = await res.text();
-        } else {
-          throw new Error('Direct fetch failed');
-        }
-      } catch (e) {
-        // 2. Try CORS proxy (allorigins)
-        try {
-          const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-          const json = await res.json();
-          html = json.contents;
-          usedProxy = true;
-        } catch (proxyErr) {
-          throw new Error('Target site is blocking all access methods. Try a site that allows browser crawlers.');
-        }
-      }
+		if (
+			asset.fileType === 'script' ||
+			asset.fileType === 'style' ||
+			asset.fileType === 'document'
+		) {
+			isAssetLoading = true;
+			try {
+				const res = await fetch(`/api/proxy-asset?url=${encodeURIComponent(asset.url)}`);
+				if (res.ok) {
+					const raw = await res.text();
+					assetContent = formatAndHighlight(raw, asset.fileType);
+				} else {
+					assetContent = '<span class="text-red-500">// Failed to load asset content.</span>';
+				}
+			} catch (err) {
+				assetContent = '<span class="text-red-500">// Error fetching asset.</span>';
+			} finally {
+				isAssetLoading = false;
+			}
+		}
+	}
 
-      if (!html) throw new Error('Could not retrieve site content.');
+	// Scroll lock effect
+	$effect(() => {
+		if (isMapOpen || selectedAsset || showFullDesc || isProviderModalOpen) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+		return () => {
+			document.body.style.overflow = '';
+		};
+	});
 
-      // 3. Analyze HTML using shared logic
-      const analysis = analyzeHtml(html, targetUrl, domain);
-      
-      // 4. Merge with server-provided network data
-      clientReport = {
-        ...data.networkData,
-        ...analysis,
-        domain,
-        favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-        logo: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
-        redFlags: [],
-        subdomains: [],
-        security: [], // Would need server-side headers
-        securityScore: 'B',
-        performance: {
-          pageSize: Math.round(new TextEncoder().encode(html).length / 1024),
-          domNodes: 0, // Hard to calculate without full DOM
-          compression: 'Unknown'
-        },
-        accessibility: {
-          score: 80,
-          missingAltTags: 0,
-          hasAriaLabels: true
-        },
-        assets: [],
-        updatedAt: new Date().toISOString()
-      };
-      
-      if (usedProxy) {
-        toast.info('Fetched via proxy due to site restrictions');
-      }
-    } catch (err: any) {
-      clientError = err.message;
-      toast.error('Browser-side scan failed: ' + err.message);
-    } finally {
-      isScanningClient = false;
-    }
-  }
+	// Derive final report and error
+	let report = $derived(clientReport || serverReportResolved);
+	let error = $derived(clientError || data.error);
 
-  const handleToggleFavorite = () => {
-    if (report) {
-      toggleFavorite(report);
-      toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-    }
-  };
+	let isFavorite = $derived($favorites.some((f) => f.domain === report?.domain));
 
-  const generateComponent = () => {
-    if (!report) return '';
-    const primaryColor = report.brandColors[0] || '#000000';
-    const secondaryColor = report.brandColors[1] || '#ffffff';
-    const font = report.fonts[0] || 'Inter';
+	// Svelte 5 effect to handle history and client-side fallback
+	$effect(() => {
+		const r = data.streamed.report;
+		r.then((reportValue: any) => {
+			serverReportResolved = reportValue;
+			if (reportValue) {
+				if (reportValue.needsClientFetch && !clientReport) {
+					performClientScan();
+				} else if (!reportValue.needsClientFetch) {
+					addToHistory(reportValue);
+				}
+			}
+		}).catch((err) => {
+			clientError = err.message || 'Failed to scan website';
+		});
+	});
 
-    return `
+	// Helper to handle image load errors with robust fallbacks
+	const handleImageError = (e: Event) => {
+		const target = e.currentTarget as HTMLImageElement;
+		const domain = report?.domain || activeReport?.domain;
+		if (!domain) return;
+
+		if (!target.src.includes('google.com')) {
+			target.src = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+		} else if (!target.src.includes('duckduckgo.com')) {
+			target.src = `https://icons.duckduckgo.com/ip3/${domain}.ico`;
+		} else {
+			// If all else fails, hide and show a generic fallback icon
+			target.style.display = 'none';
+			const container = target.parentElement;
+			if (container) {
+				container.innerHTML =
+					'<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-globe text-neutral-400"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>';
+			}
+		}
+	};
+
+	async function performClientScan() {
+		isScanningClient = true;
+		clientError = null;
+		const targetUrl = data.url.startsWith('http') ? data.url : `https://${data.url}`;
+		const domain = new URL(targetUrl).hostname;
+
+		try {
+			// 1. Try direct fetch (works if CORS is open)
+			let html = '';
+			let usedProxy = false;
+
+			try {
+				const res = await fetch(targetUrl);
+				if (res.ok) {
+					html = await res.text();
+				} else {
+					throw new Error('Direct fetch failed');
+				}
+			} catch (e) {
+				// 2. Try CORS proxy (allorigins)
+				try {
+					const res = await fetch(
+						`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`
+					);
+					const json = await res.json();
+					html = json.contents;
+					usedProxy = true;
+				} catch (proxyErr) {
+					throw new Error(
+						'Target site is blocking all access methods. Try a site that allows browser crawlers.'
+					);
+				}
+			}
+
+			if (!html) throw new Error('Could not retrieve site content.');
+
+			// 3. Analyze HTML using shared logic
+			const analysis = analyzeHtml(html, targetUrl, domain);
+
+			// 4. Merge with server-provided network data
+			clientReport = {
+				...data.networkData,
+				...analysis,
+				domain,
+				favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+				logo: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
+				redFlags: [],
+				subdomains: [],
+				security: [], // Would need server-side headers
+				securityScore: 'B',
+				performance: {
+					pageSize: Math.round(new TextEncoder().encode(html).length / 1024),
+					domNodes: 0, // Hard to calculate without full DOM
+					compression: 'Unknown'
+				},
+				accessibility: {
+					score: 80,
+					missingAltTags: 0,
+					hasAriaLabels: true
+				},
+				assets: [],
+				updatedAt: new Date().toISOString()
+			};
+
+			if (usedProxy) {
+				toast.info('Fetched via proxy due to site restrictions');
+			}
+		} catch (err: any) {
+			clientError = err.message;
+			toast.error('Browser-side scan failed: ' + err.message);
+		} finally {
+			isScanningClient = false;
+		}
+	}
+
+	const handleToggleFavorite = () => {
+		if (report) {
+			toggleFavorite(report);
+			toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
+		}
+	};
+
+	const generateComponent = () => {
+		if (!report) return '';
+		const primaryColor = report.brandColors[0] || '#000000';
+		const secondaryColor = report.brandColors[1] || '#ffffff';
+		const font = report.fonts[0] || 'Inter';
+
+		return `
 import React from 'react';
 
 const ${report.name.replace(/\s+/g, '')}BrandCard = () => {
@@ -296,1062 +347,1673 @@ const ${report.name.replace(/\s+/g, '')}BrandCard = () => {
 
 export default ${report.name.replace(/\s+/g, '')}BrandCard;
     `.trim();
-  };
+	};
 
-  const copyToClipboard = (text: string, label: string) => {
-    if (!text) return;
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copied to clipboard`);
-  };
+	const copyToClipboard = (text: string, label: string) => {
+		if (!text) return;
+		navigator.clipboard.writeText(text);
+		toast.success(`${label} copied to clipboard`);
+	};
 
-  const copyAllDNS = () => {
-    if (!report) return;
-    const dnsText = report.dns.map((r: any) => `[${r.type}] ${r.value}`).join('\n');
-    copyToClipboard(dnsText, 'All DNS Records');
-  };
+	const copyAllDNS = () => {
+		if (!report) return;
+		const dnsText = report.dns.map((r: any) => `[${r.type}] ${r.value}`).join('\n');
+		copyToClipboard(dnsText, 'All DNS Records');
+	};
 
-  const downloadDNS = () => {
-    if (!report) return;
-    const dnsText = `DNS Records for ${report.domain}\nGenerated by WebDNA on ${new Date().toLocaleString()}\n\n` + 
-      report.dns.map((r: any) => `${r.type.padEnd(5)} ${r.value}`).join('\n');
-    const blob = new Blob([dnsText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${report.domain}-dns.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('DNS records exported to .txt');
-  };
+	const downloadDNS = () => {
+		if (!report) return;
+		const dnsText =
+			`DNS Records for ${report.domain}\nGenerated by WebDNA on ${new Date().toLocaleString()}\n\n` +
+			report.dns.map((r: any) => `${r.type.padEnd(5)} ${r.value}`).join('\n');
+		const blob = new Blob([dnsText], { type: 'text/plain' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${report.domain}-dns.txt`;
+		a.click();
+		URL.revokeObjectURL(url);
+		toast.success('DNS records exported to .txt');
+	};
 
-  const downloadColors = () => {
-    if (!report) return;
-    const colorText = `/* Brand Colors for ${report.domain} */\n:root {\n` + 
-      report.brandColors.map((c: string, i: number) => `  --color-brand-${i + 1}: ${c};`).join('\n') + 
-      '\n}';
-    const blob = new Blob([colorText], { type: 'text/css' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${report.domain}-colors.css`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Colors exported to .css');
-  };
+	const downloadColors = () => {
+		if (!report) return;
+		const colorText =
+			`/* Brand Colors for ${report.domain} */\n:root {\n` +
+			report.brandColors
+				.map((c: string, i: number) => `  --color-brand-${i + 1}: ${c};`)
+				.join('\n') +
+			'\n}';
+		const blob = new Blob([colorText], { type: 'text/css' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${report.domain}-colors.css`;
+		a.click();
+		URL.revokeObjectURL(url);
+		toast.success('Colors exported to .css');
+	};
 
-  let expandedFolders = $state(new Set<string>());
-  const toggleFolder = (path: string) => {
-    if (expandedFolders.has(path)) {
-      expandedFolders.delete(path);
-    } else {
-      expandedFolders.add(path);
-    }
-    // Svelte 5 requires re-assignment to trigger reactivity for Set mutations
-    expandedFolders = new Set(expandedFolders);
-  };
+	let expandedFolders = $state(new Set<string>());
+	const toggleFolder = (path: string) => {
+		if (expandedFolders.has(path)) {
+			expandedFolders.delete(path);
+		} else {
+			expandedFolders.add(path);
+		}
+		// Svelte 5 requires re-assignment to trigger reactivity for Set mutations
+		expandedFolders = new Set(expandedFolders);
+	};
 </script>
 
 <svelte:head>
-  {#if report}
-    <title>{report.name}</title>
-    <meta name="description" content="Website analysis tool." />
-    
-    <!-- OpenGraph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={report.name} />
-    <meta property="og:description" content="Website analysis powered by WebDNA." />
-    <meta property="og:image" content="https://siteglow.xtra.wtf/og-image.png" />
+	{#if report}
+		<title>{report.name}</title>
+		<meta name="description" content="Website analysis tool." />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:title" content={report.name} />
-    <meta property="twitter:description" content="Website analysis powered by WebDNA." />
-    <meta property="twitter:image" content="https://siteglow.xtra.wtf/og-image.png" />
-  {:else}
-    <title>Inspecting...</title>
-  {/if}
+		<!-- OpenGraph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={report.name} />
+		<meta property="og:description" content="Website analysis powered by WebDNA." />
+		<meta property="og:image" content="https://siteglow.xtra.wtf/og-image.png" />
+
+		<!-- Twitter -->
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:title" content={report.name} />
+		<meta property="twitter:description" content="Website analysis powered by WebDNA." />
+		<meta property="twitter:image" content="https://siteglow.xtra.wtf/og-image.png" />
+	{:else}
+		<title>Inspecting...</title>
+	{/if}
 </svelte:head>
 
 {#snippet assetItem(node: any, path: string = '')}
-  {@const currentPath = path ? `${path}/${node.name}` : node.name}
-  {@const isExpanded = expandedFolders.has(currentPath)}
-  
-  <div class="flex flex-col">
-    <div 
-      class="group flex items-center gap-1.5 py-1 px-2 rounded-md hover:bg-neutral-100 dark:hover:bg-neutral-800/50 cursor-pointer transition-colors"
-      onclick={() => node.type === 'folder' && toggleFolder(currentPath)}
-      role="button"
-      tabindex="0"
-      onkeydown={(e) => e.key === 'Enter' && node.type === 'folder' && toggleFolder(currentPath)}
-    >
-      {#if node.type === 'folder'}
-        {#if isExpanded}
-          <ChevronDown size={14} class="text-neutral-400" />
-          <Folder size={14} class="text-blue-500 fill-blue-500/20" />
-        {:else}
-          <ChevronRight size={14} class="text-neutral-400" />
-          <Folder size={14} class="text-neutral-400" />
-        {/if}
-        <span class="text-xs font-medium dark:text-neutral-300">{node.name}</span>
-      {:else}
-        <div class="w-3.5"></div>
-        {#if node.fileType === 'image'}
-          <FileImage size={14} class="text-purple-500" />
-        {:else if node.fileType === 'script'}
-          <FileCode size={14} class="text-yellow-600" />
-        {:else if node.fileType === 'style'}
-          <FileCode size={14} class="text-blue-600" />
-        {:else}
-          <File size={14} class="text-neutral-400" />
-        {/if}
-        <button 
-          onclick={(e) => { e.stopPropagation(); openAsset(node); }}
-          title={node.name}
-          class="text-xs text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white truncate text-left w-full"
-        >
-          {node.name}
-        </button>
-      {/if}
-    </div>
+	{@const currentPath = path ? `${path}/${node.name}` : node.name}
+	{@const isExpanded = expandedFolders.has(currentPath)}
 
-    {#if node.type === 'folder' && isExpanded && node.children}
-      <div class="ml-4 pl-1 border-l border-neutral-100 dark:border-neutral-800">
-        {#each node.children as child}
-          {@render assetItem(child, currentPath)}
-        {/each}
-      </div>
-    {/if}
-  </div>
+	<div class="flex flex-col">
+		<button
+			class="group flex w-full items-center gap-2 border border-transparent px-3 py-1.5 text-left transition-all hover:border-[var(--whois-border)] hover:bg-[var(--whois-surface-2)]"
+			onclick={() => {
+				if (node.type === 'folder') {
+					toggleFolder(currentPath);
+				} else {
+					openAsset(node);
+				}
+			}}
+		>
+			{#if node.type === 'folder'}
+				<div class="flex items-center gap-2">
+					{#if isExpanded}
+						<ChevronDown size={14} class="text-[var(--whois-accent)]" />
+						<Folder size={14} class="text-[var(--whois-accent)]" />
+					{:else}
+						<ChevronRight size={14} class="text-[var(--whois-text-dim)]" />
+						<Folder size={14} class="text-[var(--whois-text-muted)]" />
+					{/if}
+				</div>
+				<span
+					class="truncate text-[10px] font-bold tracking-wider text-[var(--whois-text)] uppercase"
+					>{node.name}</span
+				>
+			{:else}
+				<div class="flex items-center gap-2">
+					<div class="w-3.5"></div>
+					{#if node.fileType === 'image'}
+						<FileImage size={14} class="text-purple-500" />
+					{:else if node.fileType === 'script'}
+						<FileCode size={14} class="text-[var(--whois-accent)]" />
+					{:else if node.fileType === 'style'}
+						<FileCode size={14} class="text-blue-500" />
+					{:else}
+						<File size={14} class="text-[var(--whois-text-dim)]" />
+					{/if}
+				</div>
+				<span
+					class="w-full truncate text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase group-hover:text-[var(--whois-accent)]"
+				>
+					{node.name}
+				</span>
+			{/if}
+		</button>
+
+		{#if node.type === 'folder' && isExpanded && node.children}
+			<div class="ml-4 border-l border-[var(--whois-border)] pl-2">
+				{#each node.children as child}
+					{@render assetItem(child, currentPath)}
+				{/each}
+			</div>
+		{/if}
+	</div>
 {/snippet}
 
 {#if isScanningClient}
-  <!-- Client Scanning Loader -->
-  <div class="mx-auto max-w-2xl px-4 py-20 text-center" in:fade>
-    <div class="mb-6 flex justify-center">
-      <div class="rounded-full bg-neutral-100 p-4 dark:bg-neutral-800 animate-spin">
-        <Loader2 size={40} class="text-neutral-600 dark:text-neutral-400" />
-      </div>
-    </div>
-    <h1 class="text-2xl font-bold dark:text-white tracking-tight">Using Browser Fallback</h1>
-    <p class="mt-2 text-neutral-600 dark:text-neutral-400">
-      The server was blocked, so we're scanning directly from your browser...
-    </p>
-  </div>
+	<!-- Client Scanning Loader -->
+	<div class="mx-auto max-w-2xl px-4 py-20 text-center font-mono" in:fade>
+		<div class="mb-8 flex justify-center">
+			<div class="animate-pulse border border-[var(--whois-border)] bg-[var(--whois-surface)] p-8">
+				<Loader2 size={48} class="animate-spin text-[var(--whois-accent)]" />
+			</div>
+		</div>
+		<h1 class="mb-4 text-3xl font-black tracking-tighter text-[var(--whois-text)] uppercase">
+			Fallback_Protocol_Active
+		</h1>
+		<p
+			class="text-xs leading-relaxed font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+		>
+			Request blocked. Attempting direct page scan...
+		</p>
+	</div>
 {:else if error}
-  <div class="mx-auto max-w-2xl px-4 py-20 text-center" in:fade>
-    <div class="mb-6 flex justify-center">
-      <div class="rounded-full bg-red-100 p-4 dark:bg-red-900/30">
-        <InfoIcon size={40} class="text-red-600 dark:text-red-400" />
-      </div>
-    </div>
-    <h1 class="text-2xl font-bold dark:text-white">Scan Failed</h1>
-    <p class="mt-2 text-neutral-600 dark:text-neutral-400 max-w-md mx-auto">
-      {error}
-    </p>
-    <div class="mt-8">
-      <Button variant="outline" href="/">Go Back Home</Button>
-    </div>
-  </div>
+	<div class="mx-auto max-w-2xl px-4 py-20 text-center font-mono" in:fade>
+		<div class="mb-8 flex justify-center">
+			<div class="border border-red-900/50 bg-red-950/20 p-8">
+				<InfoIcon size={48} class="text-red-500" />
+			</div>
+		</div>
+		<h1 class="mb-4 text-3xl font-black tracking-tighter text-red-500 uppercase">
+			Transmission_Failure
+		</h1>
+		<p
+			class="mx-auto max-w-md text-xs leading-relaxed font-bold tracking-[0.2em] text-red-400 uppercase"
+		>
+			{error}
+		</p>
+		<div class="mt-12">
+			<a
+				href="/"
+				class="border border-red-900/50 px-8 py-3 text-[10px] font-black tracking-widest text-red-500 uppercase transition-all hover:bg-red-500 hover:text-black"
+				>Terminate & Revert</a
+			>
+		</div>
+	</div>
 {:else}
-  {#await data.streamed.report}
-    <!-- Skeleton Loader -->
-    <div class="mt-2 flex flex-col space-y-2 px-2" in:fade>
-      <div class="p-px">
-        <div class="overflow-hidden rounded-md border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/40">
-          <div class="flex flex-col min-h-[calc(100vh-8rem)]">
-            <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
-              <div class="h-4 w-32 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
-              <div class="h-4 w-12 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
-            </div>
-            <div class="p-6 space-y-8">
-              <div class="flex items-center gap-4">
-                <div class="h-16 w-16 animate-pulse rounded-xl bg-neutral-100 dark:bg-neutral-800"></div>
-                <div class="space-y-2">
-                  <div class="h-8 w-48 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
-                  <div class="h-4 w-32 animate-pulse rounded bg-neutral-100 dark:bg-neutral-800"></div>
-                </div>
-              </div>
-              <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                <div class="space-y-6 lg:col-span-2">
-                  <div class="h-40 w-full animate-pulse rounded-2xl bg-neutral-100 dark:bg-neutral-800"></div>
-                  <div class="h-40 w-full animate-pulse rounded-2xl bg-neutral-100 dark:bg-neutral-800"></div>
-                </div>
-                <div class="h-80 w-full animate-pulse rounded-2xl bg-neutral-100 dark:bg-neutral-800"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  {:then reportValue}
-    {@const activeReport = clientReport || reportValue}
-    {#if activeReport}
-      <div class="mt-2 flex flex-col space-y-2 px-2">
-        <div class="p-px">
-          <div class="overflow-hidden rounded-md border border-neutral-200 bg-white shadow-xs dark:border-neutral-800 dark:bg-neutral-900/40">
-            <div class="flex flex-col min-h-[calc(100vh-8rem)]">
-              
-              <!-- Result Header -->
-              <div class="flex items-center justify-between border-b border-neutral-200 px-4 py-3 dark:border-neutral-800">
-                <div class="flex items-center space-x-2 text-neutral-500 dark:text-neutral-400">
-                  <LayersIcon size={18} strokeWidth={1.5} />
-                  <p class="text-sm">
-                    <span class="font-mono">Inspection</span>
-                    <span>Report</span>
-                  </p>
-                </div>
-                <div class="flex items-center space-x-2">
-                  <Badge variant="outline" class="font-mono text-[10px] uppercase tracking-wider">v1.0.0</Badge>
-                </div>
-              </div>
+	{#await data.streamed.report}
+		<!-- Skeleton Loader -->
+		<div class="mt-2 flex flex-col space-y-2 px-2 font-mono" in:fade>
+			<div class="p-px">
+				<div class="border border-[var(--whois-border)] bg-[var(--whois-bg)]">
+					<div class="flex min-h-[calc(100vh-8rem)] flex-col">
+						<div
+							class="flex items-center justify-between border-b border-[var(--whois-border)] bg-[var(--whois-surface)] px-4 py-3"
+						>
+							<div class="h-3 w-32 animate-pulse bg-[var(--whois-surface-2)]"></div>
+							<div class="h-3 w-12 animate-pulse bg-[var(--whois-surface-2)]"></div>
+						</div>
+						<div class="space-y-12 p-8">
+							<div class="flex items-center gap-6">
+								<div
+									class="h-16 w-16 animate-pulse border border-[var(--whois-border)] bg-[var(--whois-surface-2)]"
+								></div>
+								<div class="space-y-3">
+									<div class="h-8 w-64 animate-pulse bg-[var(--whois-surface-2)]"></div>
+									<div class="h-4 w-48 animate-pulse bg-[var(--whois-surface-2)]"></div>
+								</div>
+							</div>
+							<div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+								<div class="space-y-8 lg:col-span-2">
+									<div
+										class="h-48 w-full animate-pulse border border-[var(--whois-border)] bg-[var(--whois-surface)]"
+									></div>
+									<div
+										class="h-48 w-full animate-pulse border border-[var(--whois-border)] bg-[var(--whois-surface)]"
+									></div>
+								</div>
+								<div
+									class="h-96 w-full animate-pulse border border-[var(--whois-border)] bg-[var(--whois-surface)]"
+								></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	{:then reportValue}
+		{@const activeReport = clientReport || reportValue}
+		{#if activeReport}
+			<div
+				class="mt-2 flex flex-col space-y-2 px-2 selection:bg-[var(--whois-accent)] selection:text-[var(--whois-accent-text)]"
+			>
+				<div class="p-px">
+					<div
+						class="svgl-bg flex h-[calc(100vh-4rem)] flex-col overflow-hidden border border-[var(--whois-border)] bg-[var(--whois-bg)]"
+					>
+						<div class="flex h-full flex-col">
+							<!-- Result Header (Sticky) -->
+							<div
+								class="sticky top-0 z-20 flex shrink-0 items-center justify-between border-b border-[var(--whois-border)] bg-[var(--whois-surface)] px-4 py-3"
+							>
+								<div class="flex items-center space-x-2 text-[var(--whois-text-muted)]">
+									<LayersIcon size={14} strokeWidth={2} class="text-[var(--whois-accent)]" />
+									<p class="text-[8px] font-black tracking-[0.3em] uppercase">
+										<span>Overview</span>
+									</p>
+								</div>
+								<div class="flex items-center space-x-2">
+									<div
+										class="border border-[var(--whois-border)] px-2 py-0.5 text-[8px] font-black tracking-widest text-[var(--whois-accent)] uppercase"
+									>
+										Stable
+									</div>
+								</div>
+							</div>
 
-              <!-- Content -->
-              <div class="p-4 md:p-6">
-                <!-- Header / Overview -->
-                <div class="mb-10 flex flex-col items-center justify-between gap-8 md:flex-row md:items-center">
-                  <div class="flex flex-col items-center gap-4 md:flex-row md:items-start text-center md:text-left">
-                    <div class="flex h-20 w-20 md:h-14 md:w-14 items-center justify-center rounded-2xl border border-neutral-100 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900 overflow-hidden shrink-0">
-                      <img 
-                        src={activeReport.favicon} 
-                        alt={activeReport.name} 
-                        class="h-12 w-12 md:h-10 md:w-10 object-contain" 
-                        onerror={handleImageError}
-                      />
-                    </div>
-                    <div>
-                      <div class="flex flex-col md:flex-row items-center gap-3">
-                        <h1 class="text-3xl font-black tracking-tight text-neutral-900 dark:text-white md:text-4xl">
-                          {activeReport.name}
-                        </h1>
-                      </div>
-                      <div class="mt-1 flex items-center justify-center md:justify-start gap-2 text-neutral-500 dark:text-neutral-400">
-                        <span class="text-lg font-medium font-mono">{activeReport.domain}</span>
-                        <a href="https://{activeReport.domain}" target="_blank" class="flex h-6 w-6 items-center justify-center rounded-full bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors">
-                          <ExternalLinkIcon size={12} />
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="flex w-full items-center justify-center gap-2 md:w-auto">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onclick={handleToggleFavorite}
-                      class={cn(
-                        "flex-1 md:flex-none px-4 h-10 md:h-8",
-                        isFavorite ? "bg-yellow-50 text-yellow-600 border-yellow-200 hover:bg-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800" : ""
-                      )}
-                    >
-                      <StarIcon size={14} fill={isFavorite ? "currentColor" : "none"} />
-                      <span class="md:inline">{isFavorite ? 'Favorited' : 'Favorite'}</span>
-                    </Button>
-                    <Button variant="outline" size="sm" onclick={() => copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON')} class="h-10 md:h-8 px-4">
-                      <DownloadIcon size={14} />
-                      <span class="hidden md:inline">JSON</span>
-                    </Button>
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onclick={() => copyToClipboard(window.location.href, 'Report URL')}
-                      style="background-color: #1e3a8a; color: white; border: none;"
-                      class="flex-1 md:flex-none shadow-lg shadow-[#1e3a8a]/20 transition-transform active:scale-95 hover:brightness-105 h-10 md:h-8 px-6"
-                    >
-                      <ShareIcon size={14} />
-                      Share
-                    </Button>
-                  </div>
-                </div>
+							<!-- Scrollable Content -->
+							<div class="custom-scrollbar flex-1 overflow-y-auto p-4 md:p-6">
+								<!-- Header / Overview -->
+								<div
+									class="mb-10 flex flex-col items-center justify-between gap-8 md:flex-row md:items-center"
+								>
+									<div
+										class="flex flex-col items-center gap-6 text-center md:flex-row md:items-center md:text-left"
+									>
+										<div
+											class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden border border-[var(--whois-border)] bg-[var(--whois-surface-2)] md:h-16 md:w-16"
+										>
+											<img
+												src={activeReport.favicon}
+												alt={activeReport.name}
+												class="h-12 w-12 object-contain opacity-100 transition-all md:h-10 md:w-10"
+												onerror={handleImageError}
+											/>
+										</div>
+										<div>
+											<div class="flex flex-col items-baseline gap-3 md:flex-row">
+												<h1
+													class="text-5xl font-black tracking-tighter text-[var(--whois-text)] uppercase"
+												>
+													{activeReport.name.replace(/_/g, ' ')}
+												</h1>
+											</div>
+											<div
+												class="mt-1 flex items-center justify-center gap-2 text-[var(--whois-text-muted)] md:justify-start"
+											>
+												<span class="text-xl font-bold text-[var(--whois-accent)]">$</span>
+												<span class="text-xl font-bold">{activeReport.domain}</span>
+												<a
+													href="https://{activeReport.domain}"
+													target="_blank"
+													class="flex h-6 w-6 items-center justify-center border border-[var(--whois-border)] text-[var(--whois-accent)] transition-colors hover:bg-[var(--whois-surface)]"
+												>
+													<ExternalLinkIcon size={12} />
+												</a>
+											</div>
+										</div>
+									</div>
 
-                <!-- Server info -->
-                <div class="mb-10 flex w-full gap-4 overflow-x-auto pb-2 no-scrollbar md:flex-wrap md:overflow-visible md:pb-0">
-                  <div class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[140px] flex items-center gap-3 shrink-0">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
-                      <Globe size={14} class="text-neutral-500" />
-                    </div>
-                    <div>
-                      <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">IP Address</span>
-                      <p class="text-xs font-mono font-bold dark:text-white">{activeReport.ip || 'Unknown'}</p>
-                    </div>
-                  </div>
-                  <button 
-                    onclick={() => isProviderModalOpen = true}
-                    class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
-                  >
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
-                      <Server size={14} class="text-[#7bc5e4]" />
-                    </div>
-                    <div class="text-left">
-                      <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">Provider</span>
-                      <p class="text-xs font-bold dark:text-white truncate max-w-[100px]" title={activeReport.provider || 'Unknown'}>{activeReport.provider || 'Unknown'}</p>
-                    </div>
-                  </button>
-                  <button 
-                    onclick={() => isMapOpen = true}
-                    class="rounded-2xl border border-neutral-100 bg-neutral-50/30 p-3 dark:border-neutral-800 dark:bg-neutral-900/20 min-w-[160px] flex items-center gap-3 shrink-0 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors group"
-                  >
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-white dark:bg-neutral-800 shadow-xs border border-neutral-100 dark:border-neutral-700 shrink-0">
-                      <MapPin size={14} class="text-[#7bc5e4]" />
-                    </div>
-                    <div class="text-left">
-                      <span class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-0.5">Location</span>
-                      <p class="text-xs font-bold dark:text-white">{activeReport.location || 'Unknown'}</p>
-                    </div>
-                  </button>
-                </div>
+									<div class="flex w-full items-center justify-center gap-2 md:w-auto">
+										<button
+											onclick={handleToggleFavorite}
+											class={cn(
+												'flex h-9 flex-1 items-center justify-center gap-2 border px-4 text-[10px] font-bold tracking-widest uppercase transition-all md:flex-none',
+												isFavorite
+													? 'border-[var(--whois-accent)] bg-[var(--whois-accent)] text-[var(--whois-accent-text)]'
+													: 'border-[var(--whois-border)] bg-transparent text-[var(--whois-text-muted)] hover:border-[var(--whois-accent)] hover:text-[var(--whois-text)]'
+											)}
+										>
+											<StarIcon size={14} fill={isFavorite ? 'currentColor' : 'none'} />
+											<span>{isFavorite ? 'Saved' : 'Save'}</span>
+										</button>
+										<button
+											onclick={() =>
+												copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON')}
+											class="flex h-9 items-center gap-2 border border-[var(--whois-border)] px-4 text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-all hover:border-[var(--whois-accent)] hover:text-[var(--whois-text)]"
+										>
+											<DownloadIcon size={14} />
+											<span>JSON</span>
+										</button>
+										<button
+											onclick={() => copyToClipboard(window.location.href, 'Report URL')}
+											class="flex h-9 flex-1 items-center gap-2 bg-[var(--whois-accent-blue)] px-6 text-[10px] font-black tracking-widest text-white uppercase transition-all hover:brightness-110 active:scale-95 md:flex-none"
+										>
+											<ShareIcon size={14} />
+											Share
+										</button>
+									</div>
+								</div>
 
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <!-- Left Column: Branding & Visuals -->
-                  <div class="space-y-6 lg:col-span-2">
-                    <!-- Design DNA Summary -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2 px-1">
-                        <Dna size={18} class="text-[#7bc5e4]" />
-                        <h2 class="text-lg font-bold dark:text-white">Design DNA</h2>
-                      </div>
-                      
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Typography & Lang -->
-                        <div class="space-y-4">
-                          <div>
-                            <h3 class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-2 px-1">Typography</h3>
-                            <div class="space-y-2">
-                              <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
-                                <div class="flex flex-col">
-                                  <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Heading</span>
-                                  <span class="text-sm font-bold dark:text-white truncate md:whitespace-normal md:max-w-none" style="font-family: {activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[0] || 'Inter'}</span>
-                                </div>
-                                <span class="text-xl font-serif dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
-                              </div>
-                              <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:shadow-sm transition-all group">
-                                <div class="flex flex-col">
-                                  <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter">Body</span>
-                                  <span class="text-sm font-medium dark:text-white truncate md:whitespace-normal md:max-w-none" style="font-family: {activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}" title={activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}>{activeReport.fonts?.[1] || activeReport.fonts?.[0] || 'Inter'}</span>
-                                </div>
-                                <span class="text-xl font-sans dark:text-neutral-400 group-hover:scale-110 transition-transform">Aa</span>
-                              </div>
-                            </div>
-                          </div>
+								<!-- Server info -->
+								<div
+									class="no-scrollbar mb-10 flex w-full gap-4 overflow-x-auto pb-2 md:flex-wrap md:overflow-visible md:pb-0"
+								>
+									<div
+										class="flex min-w-[140px] shrink-0 items-center gap-3 border border-[var(--whois-border)] bg-[var(--whois-surface)] p-3"
+									>
+										<div
+											class="flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--whois-border)] bg-[var(--whois-surface-2)]"
+										>
+											<Globe size={14} class="text-[var(--whois-accent)]" />
+										</div>
+										<div>
+											<span
+												class="mb-0.5 block text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+												>IP Address</span
+											>
+											<p class="font-mono text-sm font-bold text-[var(--whois-text)]">
+												{activeReport.ip || 'Unknown'}
+											</p>
+										</div>
+									</div>
+									<button
+										onclick={() => (isProviderModalOpen = true)}
+										class="group flex min-w-[160px] shrink-0 items-center gap-3 border border-[var(--whois-border)] bg-[var(--whois-surface)] p-3 text-left transition-colors hover:bg-[var(--whois-surface-2)]"
+									>
+										<div
+											class="flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--whois-border)] bg-[var(--whois-surface-2)]"
+										>
+											<Server size={14} class="text-[var(--whois-accent)]" />
+										</div>
+										<div>
+											<span
+												class="mb-0.5 block text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+												>Provider</span
+											>
+											<p
+												class="max-w-[120px] truncate text-sm font-bold text-[var(--whois-text)]"
+												title={activeReport.provider || 'Unknown'}
+											>
+												{activeReport.provider || 'Unknown'}
+											</p>
+										</div>
+									</button>
+									<button
+										onclick={() => (isMapOpen = true)}
+										class="group flex min-w-[160px] shrink-0 items-center gap-3 border border-[var(--whois-border)] bg-[var(--whois-surface)] p-3 text-left transition-colors hover:bg-[var(--whois-surface-2)]"
+									>
+										<div
+											class="flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--whois-border)] bg-[var(--whois-surface-2)]"
+										>
+											<MapPin size={14} class="text-[var(--whois-accent)]" />
+										</div>
+										<div>
+											<span
+												class="mb-0.5 block text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+												>Location</span
+											>
+											<p class="text-sm font-bold text-[var(--whois-text)]">
+												{activeReport.location || 'Unknown'}
+											</p>
+										</div>
+									</button>
+								</div>
 
-                          <div class="flex gap-2">
-                            <div class="flex-1 px-3 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
-                              <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter block mb-1">Language</span>
-                              <div class="flex items-center gap-2">
-                                <span class="text-lg font-black dark:text-white">{activeReport.language || 'EN'}</span>
-                                <span class="text-[9px] font-medium text-neutral-500">{activeReport.language ? new Intl.DisplayNames(['en'], { type: 'language' }).of(activeReport.language) : 'English'}</span>
-                              </div>
-                            </div>
-                            <div 
-                              class="flex-1 px-3 py-2 rounded-xl border border-neutral-100 dark:border-neutral-800 transition-all duration-500 min-w-0 md:min-w-max"
-                              style="background-color: #7bc5e41a; border-color: #7bc5e433"
-                            >
-                              <span class="text-[8px] text-neutral-400 uppercase font-black tracking-tighter block mb-1">Theme</span>
-                              <div class="flex items-center gap-2 h-7 min-w-0">
-                                <div class="h-4 w-4 rounded-full border border-black/10 shadow-sm shrink-0" style="background-color: {activeReport.themeColor || (activeReport.brandColors?.[0] || '#000')}"></div>
-                                <span class="text-xs md:text-sm font-mono font-black dark:text-white uppercase truncate md:overflow-visible md:whitespace-normal leading-none flex-1 min-w-0" title={activeReport.themeColor || 'None'}>
-                                  {activeReport.themeColor || 'None'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+								<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+									<!-- Left Column: Branding & Visuals -->
+									<div class="space-y-6 lg:col-span-2">
+										<!-- Design DNA Summary -->
+										<section
+											class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+										>
+											<div class="mb-6 flex items-center gap-2">
+												<Dna size={18} class="text-[var(--whois-accent)]" />
+												<h2
+													class="text-sm font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+												>
+													Visual Style
+												</h2>
+											</div>
 
-                        <!-- Hierarchy & Social -->
-                        <div class="space-y-4">
-                          <div>
-                            <h3 class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-2 px-1">Hierarchy</h3>
-                            <div class="grid grid-cols-3 gap-2">
-                              <div class="px-2 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
-                                <span class="text-[8px] text-neutral-400 uppercase font-bold block">H1</span>
-                                <span class="text-lg font-bold dark:text-white">{activeReport.headings?.h1 ?? 0}</span>
-                              </div>
-                              <div class="px-2 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
-                                <span class="text-[8px] text-neutral-400 uppercase font-bold block">H2</span>
-                                <span class="text-lg font-bold dark:text-white">{activeReport.headings?.h2 ?? 0}</span>
-                              </div>
-                              <div class="px-2 py-2 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 text-center">
-                                <span class="text-[8px] text-neutral-400 uppercase font-bold block">H3</span>
-                                <span class="text-lg font-bold dark:text-white">{activeReport.headings?.h3 ?? 0}</span>
-                              </div>
-                            </div>
-                          </div>
+											<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+												<!-- Typography & Lang -->
+												<div class="space-y-4">
+													<div>
+														<h3
+															class="mb-4 text-[10px] font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+														>
+															Typography
+														</h3>
+														<div class="space-y-3">
+															<div
+																class="group flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+															>
+																<div class="flex flex-col">
+																	<span
+																		class="mb-1 text-[10px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+																		>Heading</span
+																	>
+																	<span
+																		class="truncate text-sm font-bold text-[var(--whois-text)]"
+																		style="font-family: {activeReport.fonts?.[0] || 'Inter'}"
+																		>{activeReport.fonts?.[0] || 'Inter'}</span
+																	>
+																</div>
+																<span
+																	class="font-serif text-xl text-[var(--whois-text-muted)] transition-colors group-hover:text-[var(--whois-accent)]"
+																	>Aa</span
+																>
+															</div>
+															<div
+																class="group flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+															>
+																<div class="flex flex-col">
+																	<span
+																		class="mb-1 text-[10px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+																		>Body</span
+																	>
+																	<span
+																		class="truncate text-sm font-medium text-[var(--whois-text)]"
+																		style="font-family: {activeReport.fonts?.[1] ||
+																			activeReport.fonts?.[0] ||
+																			'Inter'}"
+																		>{activeReport.fonts?.[1] ||
+																			activeReport.fonts?.[0] ||
+																			'Inter'}</span
+																	>
+																</div>
+																<span
+																	class="font-sans text-xl text-[var(--whois-text-muted)] transition-colors group-hover:text-[var(--whois-accent)]"
+																	>Aa</span
+																>
+															</div>
+														</div>
+													</div>
 
-                          <div>
-                            <h3 class="text-[9px] font-bold uppercase tracking-widest text-neutral-400 mb-2 px-1">Socials</h3>
-                            <div class="flex flex-wrap gap-1.5">
-                              {#if activeReport.socialLinks.length > 0}
-                                {#each activeReport.socialLinks as social}
-                                  <a 
-                                    href={social.url} 
-                                    target="_blank" 
-                                    class="flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-900 transition-colors"
-                                  >
-                                    <span class="text-[10px] font-bold dark:text-white">{social.platform}</span>
-                                    <ExternalLinkIcon size={10} class="text-neutral-400" />
-                                  </a>
-                                {/each}
-                              {:else}
-                                <div class="text-[10px] text-neutral-500 py-1 px-1 italic">None detected.</div>
-                              {/if}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </section>
+													<div class="flex gap-3">
+														<div
+															class="flex-1 border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<span
+																class="mb-1 block text-[10px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+																>Language</span
+															>
+															<div class="flex items-center gap-2">
+																<span class="text-2xl font-black text-[var(--whois-text)]"
+																	>{activeReport.language || 'EN'}</span
+																>
+																<span class="text-[9px] font-medium text-[var(--whois-text-muted)]"
+																	>{activeReport.language
+																		? new Intl.DisplayNames(['en'], { type: 'language' }).of(
+																				activeReport.language
+																			)
+																		: 'English'}</span
+																>
+															</div>
+														</div>
+														<div
+															class="flex-1 border border-[var(--whois-border)] bg-[var(--whois-accent-dim)] px-3 py-2"
+															style="border-color: var(--whois-accent)"
+														>
+															<span
+																class="mb-1 block text-[10px] font-black tracking-widest text-[var(--whois-accent)] uppercase"
+																>Theme</span
+															>
+															<div class="flex h-7 min-w-0 items-center gap-2">
+																<div
+																	class="h-4 w-4 shrink-0 border border-[var(--whois-border)]"
+																	style="background-color: {activeReport.themeColor ||
+																		activeReport.brandColors?.[0] ||
+																		'#000'}"
+																></div>
+																<span
+																	class="truncate font-mono text-xs font-black text-[var(--whois-accent)] uppercase"
+																>
+																	{activeReport.themeColor || 'None'}
+																</span>
+															</div>
+														</div>
+													</div>
+												</div>
 
-                    <!-- Colors Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <PaletteIcon size={18} class="text-neutral-500" />
-                          <h2 class="text-lg font-semibold dark:text-white">Brand Colors</h2>
-                        </div>
-                        <Button variant="ghost" size="sm" class="h-7 text-[10px] px-2 uppercase font-bold tracking-tight" onclick={downloadColors}>
-                          <DownloadIcon size={10} class="mr-1.5" />
-                          Export CSS
-                        </Button>
-                      </div>
-                      <div class="flex flex-wrap gap-3">
-                        {#each activeReport.brandColors as color}
-                          <button 
-                            onclick={() => copyToClipboard(color, 'Color')}
-                            class="group relative flex items-center gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-2 transition-all hover:bg-neutral-100 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-                          >
-                            <div 
-                              class="h-8 w-8 rounded-lg border border-black/5 shadow-inner dark:border-white/10 shrink-0" 
-                              style="background-color: {color}"
-                            ></div>
-                            <div class="flex flex-col items-start pr-2 justify-center">
-                              <span class="text-[8px] font-black uppercase text-neutral-400 leading-none mb-1">HEX</span>
-                              <span class="font-mono text-sm font-black text-neutral-600 group-hover:text-neutral-900 dark:group-hover:text-white leading-none">
-                                {color}
-                              </span>
-                            </div>
-                          </button>
-                        {/each}
-                      </div>
-                    </section>
+												<!-- Hierarchy & Social -->
+												<div class="space-y-6">
+													<div>
+														<h3
+															class="mb-4 text-[10px] font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+														>
+															Hierarchy
+														</h3>
+														<div class="grid grid-cols-3 gap-3">
+															<div
+																class="border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-2 py-2 text-center"
+															>
+																<span
+																	class="mb-1 block text-[8px] font-bold text-[var(--whois-text-muted)] uppercase"
+																	>H1</span
+																>
+																<span class="text-lg font-bold text-[var(--whois-text)]"
+																	>{activeReport.headings?.h1 ?? 0}</span
+																>
+															</div>
+															<div
+																class="border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-2 py-2 text-center"
+															>
+																<span
+																	class="mb-1 block text-[8px] font-bold text-[var(--whois-text-muted)] uppercase"
+																	>H2</span
+																>
+																<span class="text-lg font-bold text-[var(--whois-text)]"
+																	>{activeReport.headings?.h2 ?? 0}</span
+																>
+															</div>
+															<div
+																class="border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-2 py-2 text-center"
+															>
+																<span
+																	class="mb-1 block text-[8px] font-bold text-[var(--whois-text-muted)] uppercase"
+																	>H3</span
+																>
+																<span class="text-lg font-bold text-[var(--whois-text)]"
+																	>{activeReport.headings?.h3 ?? 0}</span
+																>
+															</div>
+														</div>
+													</div>
 
+													<div>
+														<h3
+															class="mb-4 text-[8px] font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+														>
+															Socials
+														</h3>
+														<div class="flex flex-wrap gap-2">
+															{#if activeReport.socialLinks.length > 0}
+																{#each activeReport.socialLinks as social}
+																	<a
+																		href={social.url}
+																		target="_blank"
+																		class="group flex items-center gap-1.5 border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-2 py-1.5 transition-colors hover:border-[var(--whois-accent)]"
+																	>
+																		<span
+																			class="text-[10px] font-bold text-[var(--whois-text-muted)] group-hover:text-[var(--whois-text)]"
+																			>{social.platform}</span
+																		>
+																		<ExternalLinkIcon
+																			size={10}
+																			class="text-[var(--whois-text-dim)] group-hover:text-[var(--whois-accent)]"
+																		/>
+																	</a>
+																{/each}
+															{:else}
+																<div
+																	class="px-1 py-1 text-[10px] tracking-widest text-[var(--whois-text-dim)] uppercase italic"
+																>
+																	No social presence found.
+																</div>
+															{/if}
+														</div>
+													</div>
+												</div>
+											</div>
+										</section>
 
+										<!-- Colors Card -->
+										<section
+											class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+										>
+											<div class="mb-6 flex items-center justify-between">
+												<div class="flex items-center gap-2">
+													<PaletteIcon size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														Brand Colors
+													</h2>
+												</div>
+												<button
+													class="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:text-[var(--whois-accent)]"
+													onclick={downloadColors}
+												>
+													<DownloadIcon size={10} />
+													Export CSS
+												</button>
+											</div>
+											<div class="flex flex-wrap gap-4">
+												{#each activeReport.brandColors as color}
+													<button
+														onclick={() => copyToClipboard(color, 'Color')}
+														class="group flex items-center gap-4 border border-[var(--whois-border)] bg-[var(--whois-surface-2)] p-2 pr-4 transition-all hover:border-[var(--whois-accent)]"
+													>
+														<div
+															class="h-10 w-10 shrink-0 border border-white/5"
+															style="background-color: {color}"
+														></div>
+														<div class="flex flex-col items-start justify-center">
+															<span
+																class="mb-1.5 text-[8px] leading-none font-black text-[var(--whois-text-muted)] uppercase"
+																>HEX</span
+															>
+															<span
+																class="font-mono text-sm leading-none font-bold text-[var(--whois-text)] group-hover:text-[var(--whois-accent)]"
+															>
+																{color}
+															</span>
+														</div>
+													</button>
+												{/each}
+											</div>
+										</section>
 
-                    <!-- Tech Stack Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <LayersIcon size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Technology Stack</h2>
-                      </div>
-                      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {#each activeReport.techStack as tech}
-                          <a 
-                            href={tech.website} 
-                            target="_blank"
-                            class="group flex items-center justify-between rounded-lg border border-neutral-100 bg-white p-3 transition-all hover:border-neutral-200 hover:shadow-sm dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
-                          >
-                            <div class="flex flex-col">
-                              <span class="text-sm font-medium dark:text-white group-hover:text-neutral-900 dark:group-hover:text-neutral-100">{tech.name}</span>
-                              <span class="text-[10px] text-neutral-500">{tech.category}</span>
-                            </div>
-                            <Badge variant="outline" class="text-[9px] px-1.5 h-4 uppercase transition-colors group-hover:bg-neutral-100 dark:group-hover:bg-neutral-800">{tech.category}</Badge>
-                          </a>
-                        {/each}
-                      </div>
-                    </section>
+										<!-- Tech Stack Card -->
+										<section
+											class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+										>
+											<div class="mb-6 flex items-center gap-2">
+												<LayersIcon size={18} class="text-[var(--whois-accent)]" />
+												<h2
+													class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+												>
+													Tech Stack
+												</h2>
+											</div>
+											<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+												{#each activeReport.techStack as tech}
+													<a
+														href={tech.website}
+														target="_blank"
+														class="group flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] p-3 transition-all hover:border-[var(--whois-accent)]"
+													>
+														<div class="flex flex-col">
+															<span class="text-sm font-bold text-[var(--whois-text)]"
+																>{tech.name}</span
+															>
+															<span
+																class="mt-1 text-[10px] tracking-widest text-[var(--whois-text-muted)] uppercase"
+																>{tech.category}</span
+															>
+														</div>
+														<div
+															class="border border-[var(--whois-border)] px-1.5 py-0.5 text-[10px] tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors group-hover:border-[var(--whois-accent)] group-hover:text-[var(--whois-accent)]"
+														>
+															{tech.category}
+														</div>
+													</a>
+												{/each}
+											</div>
+										</section>
 
-                    <!-- DNS Records Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <Globe size={18} class="text-neutral-500" />
-                          <h2 class="text-lg font-semibold dark:text-white">DNS Records</h2>
-                        </div>
-                        <div class="flex gap-2">
-                          <Button variant="ghost" size="sm" class="h-7 text-[10px] px-2 uppercase font-bold tracking-tight" onclick={copyAllDNS}>
-                            <CopyIcon size={10} class="mr-1.5" />
-                            Copy All
-                          </Button>
-                          <Button variant="outline" size="sm" class="h-7 text-[10px] px-2 uppercase font-bold tracking-tight" onclick={downloadDNS}>
-                            <DownloadIcon size={10} class="mr-1.5" />
-                            Export
-                          </Button>
-                        </div>
-                      </div>
-                      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {#each activeReport.dns as record}
-                          <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
-                            <div class="flex flex-col min-w-0">
-                              <span class="text-[10px] font-bold uppercase text-neutral-400">{record.type}</span>
-                              <span class="text-xs truncate dark:text-white">{record.value}</span>
-                            </div>
-                            <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => copyToClipboard(record.value, 'DNS value')}>
-                              <CopyIcon size={10} />
-                            </Button>
-                          </div>
-                        {/each}
-                      </div>
-                    </section>
+										<!-- Infrastructure & Propagation Audit -->
+										<div class="mt-8">
+											<WhoisScanner domain={activeReport.domain} />
+										</div>
 
-                    {#if activeReport.assets && activeReport.assets.length > 0}
-                    <!-- Asset Explorer Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <Folder size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Asset Explorer</h2>
-                      </div>
-                      <div class="rounded-xl border border-neutral-100 bg-neutral-50/50 p-4 dark:border-neutral-800 dark:bg-neutral-950/50 max-h-[400px] overflow-y-auto font-mono">
-                        {#each activeReport.assets as node}
-                          {@render assetItem(node)}
-                        {/each}
-                      </div>
-                    </section>
-                    {/if}
+										{#if activeReport.assets && activeReport.assets.length > 0}
+											<!-- Asset Explorer Card -->
+											<section
+												class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+											>
+												<div class="mb-6 flex items-center gap-2">
+													<Folder size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														Files
+													</h2>
+												</div>
+												<div
+													class="custom-scrollbar max-h-[400px] overflow-y-auto border border-[var(--whois-border)] bg-[var(--whois-bg)] p-4 font-mono"
+												>
+													{#each activeReport.assets as node}
+														{@render assetItem(node)}
+													{/each}
+												</div>
+											</section>
+										{/if}
 
-                    {#if activeReport.subdomains && activeReport.subdomains.length > 0}
-                    <!-- Subdomains Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <MapIcon size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Subdomains</h2>
-                      </div>
-                      <div class="flex flex-wrap gap-2">
-                        {#each activeReport.subdomains as sub}
-                          <a 
-                            href={sub.url} 
-                            target="_blank"
-                            class="flex items-center gap-2 rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-1.5 transition-colors hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-                          >
-                            <span class="text-xs font-medium dark:text-white">{sub.name}</span>
-                            <Badge variant="outline" class="text-[8px] h-3.5 uppercase bg-green-500/10 text-green-600 border-green-500/20">{sub.status}</Badge>
-                          </a>
-                        {/each}
-                      </div>
-                    </section>
-                    {/if}
+										{#if activeReport.subdomains && activeReport.subdomains.length > 0}
+											<!-- Subdomains Card -->
+											<section
+												class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+											>
+												<div class="mb-6 flex items-center gap-2">
+													<MapIcon size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														Subdomains
+													</h2>
+												</div>
+												<div class="flex flex-wrap gap-3">
+													{#each activeReport.subdomains as sub}
+														<a
+															href={sub.url}
+															target="_blank"
+															class="group flex items-center gap-3 border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-1.5 transition-all hover:border-[var(--whois-accent)]"
+														>
+															<span class="text-xs font-bold text-[var(--whois-text)]"
+																>{sub.name}</span
+															>
+															<div
+																class="border border-[var(--whois-border)] bg-[var(--whois-accent-dim)] px-1.5 py-0.5 text-[8px] font-black tracking-widest text-[var(--whois-accent)] uppercase"
+															>
+																{sub.status}
+															</div>
+														</a>
+													{/each}
+												</div>
+											</section>
+										{/if}
 
-                    {#if activeReport.redFlags && activeReport.redFlags.length > 0}
-                    <!-- Red Flags Card -->
-                    <section class="rounded-2xl border border-red-100 bg-red-50/30 p-6 dark:border-red-900/20 dark:bg-red-900/5">
-                      <div class="mb-4 flex items-center gap-2">
-                        <AlertCircle size={18} class="text-red-500" />
-                        <h2 class="text-lg font-semibold text-red-900 dark:text-red-400">Critical Red Flags</h2>
-                      </div>
-                      <div class="space-y-3">
-                        {#each activeReport.redFlags as flag}
-                          <div class="flex items-start gap-3 rounded-xl bg-white p-3 shadow-sm dark:bg-neutral-900 border border-red-100 dark:border-red-900/30">
-                            <div class="mt-0.5 rounded-full bg-red-100 p-1 dark:bg-red-900/30">
-                              <AlertCircle size={12} class="text-red-600 dark:text-red-400" />
-                            </div>
-                            <p class="text-xs leading-relaxed text-red-800 dark:text-red-300">{flag.message}</p>
-                          </div>
-                        {/each}
-                      </div>
-                    </section>
-                    {/if}
-                  </div>
+										{#if activeReport.redFlags && activeReport.redFlags.length > 0}
+											<!-- Red Flags Card -->
+											<section class="border border-red-950/30 bg-red-950/10 p-6">
+												<div class="mb-6 flex items-center gap-2">
+													<AlertCircle size={18} class="text-red-500" />
+													<h2 class="text-xs font-bold tracking-[0.2em] text-red-500 uppercase">
+														Security Warnings
+													</h2>
+												</div>
+												<div class="space-y-3">
+													{#each activeReport.redFlags as flag}
+														<div
+															class="flex items-start gap-4 border border-red-950/50 bg-red-950/20 p-4"
+														>
+															<div class="mt-0.5 shrink-0">
+																<AlertCircle size={14} class="text-red-500" />
+															</div>
+															<p
+																class="text-xs leading-relaxed font-bold tracking-wide text-red-400 uppercase"
+															>
+																{flag.message}
+															</p>
+														</div>
+													{/each}
+												</div>
+											</section>
+										{/if}
+									</div>
 
-                  <!-- Right Column: Metadata & Socials -->
-                  <div class="space-y-6">
-                    <!-- Security & Discovery Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <Fingerprint size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Domain & Email</h2>
-                      </div>
-                      
-                      <div class="space-y-6">
-                        <!-- Email Protection -->
-                        <div>
-                          <div class="mb-3 flex items-center gap-2">
-                            <Mail size={14} class="text-neutral-400" />
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Email safety</span>
-                          </div>
-                          <div class="grid grid-cols-2 gap-2">
-                            <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-950">
-                              <span class="text-xs font-medium dark:text-white">SPF</span>
-                              <Badge variant="outline" class="text-[8px] h-3.5 uppercase {activeReport.emailSecurity.spf ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}">
-                                {activeReport.emailSecurity.spf ? 'Enabled' : 'Missing'}
-                              </Badge>
-                            </div>
-                            <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-1.5 dark:border-neutral-800 dark:bg-neutral-950">
-                              <span class="text-xs font-medium dark:text-white">DMARC</span>
-                              <Badge variant="outline" class="text-[8px] h-3.5 uppercase {activeReport.emailSecurity.dmarc ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}">
-                                {activeReport.emailSecurity.dmarc ? 'Enabled' : 'Missing'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
+									<!-- Right Column: Metadata & Socials -->
+									<div class="space-y-6">
+										<!-- Security & Discovery Card -->
+										<section
+											class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+										>
+											<div class="mb-6 flex items-center gap-2">
+												<Fingerprint size={18} class="text-[var(--whois-accent)]" />
+												<h2
+													class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+												>
+													Domain & Email
+												</h2>
+											</div>
 
-                        <!-- Crawler Config -->
-                        <div>
-                          <div class="mb-3 flex items-center gap-2">
-                            <Bot size={14} class="text-neutral-400" />
-                            <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Crawler setup</span>
-                          </div>
-                          <div class="space-y-2">
-                            <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
-                              <div class="flex items-center gap-2">
-                                <FileText size={12} class="text-neutral-400" />
-                                <span class="text-xs font-medium dark:text-white">Robots.txt</span>
-                              </div>
-                              {#if activeReport.crawling.robots}
-                                <a href={activeReport.crawling.robots} target="_blank" class="text-[10px] text-blue-500 hover:underline">View File</a>
-                              {:else}
-                                <Badge variant="outline" class="text-[8px] h-3.5 uppercase bg-red-500/10 text-red-600 border-red-500/20">Not Found</Badge>
-                              {/if}
-                            </div>
-                            <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
-                              <div class="flex items-center gap-2">
-                                <MapIcon size={12} class="text-neutral-400" />
-                                <span class="text-xs font-medium dark:text-white">Sitemap</span>
-                              </div>
-                              {#if activeReport.crawling.sitemap}
-                                <a href={activeReport.crawling.sitemap} target="_blank" class="text-[10px] text-blue-500 hover:underline truncate max-w-[80px]">View Map</a>
-                              {:else}
-                                <Badge variant="outline" class="text-[8px] h-3.5 uppercase bg-red-500/10 text-red-600 border-red-500/20">Not Found</Badge>
-                              {/if}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </section>
+											<div class="space-y-8">
+												<!-- Email Protection -->
+												<div>
+													<div class="mb-4 flex items-center gap-2">
+														<Mail size={14} class="text-[var(--whois-text-muted)]" />
+														<span
+															class="text-[8px] font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+															>Email safety</span
+														>
+													</div>
+													<div class="grid grid-cols-2 gap-3">
+														<div
+															class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<span class="text-xs font-bold text-[var(--whois-text)]">SPF</span>
+															<div
+																class="border border-[var(--whois-border)] px-1.5 py-0.5 text-[8px] tracking-widest uppercase {activeReport
+																	.emailSecurity.spf
+																	? 'bg-[var(--whois-accent-dim)] text-[var(--whois-accent)]'
+																	: 'bg-red-500/10 text-red-500'} font-black"
+															>
+																{activeReport.emailSecurity.spf ? 'OK' : 'MISSING'}
+															</div>
+														</div>
+														<div
+															class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<span class="text-xs font-bold text-[var(--whois-text)]">DMARC</span>
+															<div
+																class="border border-[var(--whois-border)] px-1.5 py-0.5 text-[8px] tracking-widest uppercase {activeReport
+																	.emailSecurity.dmarc
+																	? 'bg-[var(--whois-accent-dim)] text-[var(--whois-accent)]'
+																	: 'bg-red-500/10 text-red-500'} font-black"
+															>
+																{activeReport.emailSecurity.dmarc ? 'OK' : 'MISSING'}
+															</div>
+														</div>
+													</div>
+												</div>
 
-                    <!-- Security Audit Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <ShieldCheck size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Safety check</h2>
-                      </div>
-                      <div class="space-y-2">
-                        {#each activeReport.security as header}
-                          <div class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-950">
-                            <span class="text-xs font-medium dark:text-white">{header.name}</span>
-                            <Badge 
-                              variant={header.status === 'secure' ? 'default' : 'outline'} 
-                              class="text-[9px] px-1.5 h-4 uppercase {header.status === 'secure' ? 'bg-green-500/10 text-green-600 border-green-500/20' : 'bg-red-500/10 text-red-600 border-red-500/20'}"
-                            >
-                              {header.status === 'secure' ? 'Secure' : 'Missing'}
-                            </Badge>
-                          </div>
-                        {/each}
-                      </div>
-                    </section>
+												<!-- Crawler Config -->
+												<div>
+													<div class="mb-4 flex items-center gap-2">
+														<SearchIcon size={14} class="text-[var(--whois-text-muted)]" />
+														<span
+															class="text-[8px] font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+															>Crawler setup</span
+														>
+													</div>
+													<div class="space-y-3">
+														<div
+															class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<div class="flex items-center gap-2">
+																<FileText size={14} class="text-[var(--whois-text-dim)]" />
+																<span class="text-xs font-bold text-[var(--whois-text)]"
+																	>Robots.txt</span
+																>
+															</div>
+															{#if activeReport.crawling.robots}
+																<a
+																	href={activeReport.crawling.robots}
+																	target="_blank"
+																	class="text-[10px] font-bold tracking-widest text-[var(--whois-accent)] uppercase hover:underline"
+																	>View</a
+																>
+															{:else}
+																<div
+																	class="border border-[var(--whois-border)] bg-red-500/10 px-1.5 py-0.5 text-[8px] font-black tracking-widest text-red-500 uppercase"
+																>
+																	NULL
+																</div>
+															{/if}
+														</div>
+														<div
+															class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<div class="flex items-center gap-2">
+																<MapIcon size={14} class="text-[var(--whois-text-dim)]" />
+																<span class="text-xs font-bold text-[var(--whois-text)]"
+																	>Sitemap</span
+																>
+															</div>
+															{#if activeReport.crawling.sitemap}
+																<a
+																	href={activeReport.crawling.sitemap}
+																	target="_blank"
+																	class="max-w-[80px] truncate text-[10px] font-bold tracking-widest text-[var(--whois-accent)] uppercase hover:underline"
+																	>View</a
+																>
+															{:else}
+																<div
+																	class="border border-[var(--whois-border)] bg-red-500/10 px-1.5 py-0.5 text-[8px] font-black tracking-widest text-red-500 uppercase"
+																>
+																	NULL
+																</div>
+															{/if}
+														</div>
+													</div>
+												</div>
+											</div>
+										</section>
 
-                    {#if activeReport.ssl}
-                    <!-- SSL Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <InfoIcon size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">SSL Certificate</h2>
-                      </div>
-                      <div class="space-y-3">
-                        <div class="flex flex-col">
-                          <span class="text-[10px] uppercase text-neutral-400 font-bold">Issuer</span>
-                          <span class="text-xs dark:text-white">{activeReport.ssl.issuer}</span>
-                        </div>
-                        <div class="flex flex-col">
-                          <span class="text-[10px] uppercase text-neutral-400 font-bold">Valid Until</span>
-                          <span class="text-xs {activeReport.ssl.isExpired ? 'text-red-500' : 'dark:text-white'}">
-                            {new Date(activeReport.ssl.validTo).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <Badge variant="outline" class="w-full justify-center text-[10px] py-1 border-green-500/20 bg-green-500/5 text-green-600">
-                          {activeReport.ssl.protocol}
-                        </Badge>
-                        
-                        {#if activeReport.ssl.sans && activeReport.ssl.sans.length > 0}
-                        <div class="mt-4 pt-4 border-t border-neutral-100 dark:border-neutral-800">
-                          <span class="mb-2 block text-[10px] uppercase text-neutral-400 font-bold tracking-wider text-center">Associated Domains (SAN)</span>
-                          <div class="flex flex-wrap justify-center gap-1">
-                            {#each activeReport.ssl.sans as san}
-                              <span class="rounded bg-neutral-100 px-1.5 py-0.5 text-[9px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                                {san}
-                              </span>
-                            {/each}
-                          </div>
-                        </div>
-                        {/if}
-                      </div>
-                    </section>
-                    {/if}
+										<!-- Security Audit Card -->
+										<section
+											class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+										>
+											<div class="mb-6 flex items-center gap-2">
+												<ShieldCheck size={18} class="text-[var(--whois-accent)]" />
+												<h2
+													class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+												>
+													Safety check
+												</h2>
+											</div>
+											<div class="space-y-3">
+												{#each activeReport.security as header}
+													<div
+														class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+													>
+														<span class="text-xs font-bold text-[var(--whois-text)]"
+															>{header.name}</span
+														>
+														<div
+															class="border border-[var(--whois-border)] px-1.5 py-0.5 text-[8px] tracking-widest uppercase {header.status ===
+															'secure'
+																? 'bg-[var(--whois-accent-dim)] text-[var(--whois-accent)]'
+																: 'bg-red-500/10 text-red-500'} font-black"
+														>
+															{header.status === 'secure' ? 'SECURE' : 'MISSING'}
+														</div>
+													</div>
+												{/each}
+											</div>
+										</section>
 
-                    {#if activeReport.performance}
-                    <!-- Performance Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <Gauge size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Speed & Quality</h2>
-                      </div>
-                      <div class="grid grid-cols-2 gap-4">
-                        <div class="flex flex-col">
-                          <span class="text-[10px] uppercase text-neutral-400 font-bold tracking-wider">Page Size</span>
-                          <span class="text-sm font-medium dark:text-white">{activeReport.performance.pageSize} KB</span>
-                        </div>
-                        <div class="flex flex-col">
-                          <span class="text-[10px] uppercase text-neutral-400 font-bold tracking-wider">DOM Nodes</span>
-                          <span class="text-sm font-medium dark:text-white">{activeReport.performance.domNodes}</span>
-                        </div>
-                        <div class="flex flex-col">
-                          <span class="text-[10px] uppercase text-neutral-400 font-bold tracking-wider">Compression</span>
-                          <span class="text-xs dark:text-white truncate">{activeReport.performance.compression}</span>
-                        </div>
-                      </div>
-                    </section>
-                    {/if}
+										{#if activeReport.ssl}
+											<!-- SSL Card -->
+											<section
+												class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+											>
+												<div class="mb-6 flex items-center gap-2">
+													<InfoIcon size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														SSL Certificate
+													</h2>
+												</div>
+												<div class="space-y-5">
+													<div class="flex flex-col border-l-2 border-[var(--whois-border)] pl-4">
+														<span
+															class="mb-1 text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+															>Issuer</span
+														>
+														<span class="text-xs font-bold text-[var(--whois-text)]"
+															>{activeReport.ssl.issuer}</span
+														>
+													</div>
+													<div class="flex flex-col border-l-2 border-[var(--whois-border)] pl-4">
+														<span
+															class="mb-1 text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+															>Valid Until</span
+														>
+														<span
+															class="text-xs font-bold {activeReport.ssl.isExpired
+																? 'text-red-500'
+																: 'text-[var(--whois-text)]'}"
+														>
+															{new Date(activeReport.ssl.validTo).toLocaleDateString()}
+														</span>
+													</div>
+													<div
+														class="w-full border border-[var(--whois-accent)] bg-[var(--whois-accent-dim)] py-2 text-center text-[10px] font-black tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														{activeReport.ssl.protocol}
+													</div>
 
-                    {#if activeReport.accessibility}
-                    <!-- Accessibility Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <ShieldCheck size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Accessibility</h2>
-                      </div>
-                      <div class="space-y-4">
-                        <div class="space-y-2">
-                          <div class="flex items-center justify-between">
-                            <span class="text-[10px] uppercase text-neutral-400 font-bold">Health Score</span>
-                            <span class="text-xs font-bold text-neutral-900 dark:text-white">{activeReport.accessibility.score}%</span>
-                          </div>
-                          <div class="h-2 w-full rounded-full bg-neutral-100 dark:bg-neutral-800 p-0.5 shadow-inner">
-                            <div 
-                              class="h-full rounded-full bg-gradient-to-r from-neutral-800 via-neutral-600 to-neutral-400 dark:from-white dark:via-neutral-200 dark:to-neutral-400 transition-all duration-1000 shadow-sm" 
-                              style="width: {activeReport.accessibility.score}%"
-                            ></div>
-                          </div>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2">
-                          <div class="flex items-center justify-between text-xs">
-                            <span class="text-neutral-500">Missing Alt Tags</span>
-                            <span class={activeReport.accessibility.missingAltTags > 0 ? 'text-red-500' : 'text-green-500'}>
-                              {activeReport.accessibility.missingAltTags}
-                            </span>
-                          </div>
-                          <div class="flex items-center justify-between text-xs">
-                            <span class="text-neutral-500">ARIA Support</span>
-                            <span class="dark:text-white">{activeReport.accessibility.hasAriaLabels ? 'Detected' : 'None'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-                    {/if}
+													{#if activeReport.ssl.sans && activeReport.ssl.sans.length > 0}
+														<div class="mt-4 border-t border-[var(--whois-border)] pt-4">
+															<span
+																class="mb-3 block text-center text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+																>Associated Domains (SAN)</span
+															>
+															<div class="flex flex-wrap justify-center gap-2">
+																{#each activeReport.ssl.sans as san}
+																	<span
+																		class="border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-2 py-1 text-[9px] font-bold text-[var(--whois-text-muted)]"
+																	>
+																		{san}
+																	</span>
+																{/each}
+															</div>
+														</div>
+													{/if}
+												</div>
+											</section>
+										{/if}
 
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <InfoIcon size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Metadata</h2>
-                      </div>
-                      <div class="space-y-4">
-                        <div class="overflow-hidden">
-                          <span class="mb-1 block text-[10px] font-medium text-neutral-500 uppercase tracking-wider">Meta Title</span>
-                          <p class="break-words text-xs leading-relaxed font-medium dark:text-neutral-200">{activeReport.title}</p>
-                        </div>
-                        <Separator />
-                        <div>
-                          <span class="mb-1 block text-[10px] font-medium text-neutral-500 uppercase tracking-wider">Description</span>
-                          <div class="relative">
-                            <p class="text-xs leading-relaxed text-neutral-600 line-clamp-3 dark:text-neutral-400">
-                              {activeReport.description || 'No description detected.'}
-                            </p>
-                            {#if activeReport.description && activeReport.description.length > 150}
-                              <button 
-                                onclick={() => showFullDesc = true}
-                                class="mt-1 text-[10px] font-semibold text-neutral-900 underline-offset-4 hover:underline dark:text-white"
-                              >
-                                View full description
-                              </button>
-                            {/if}
-                            {#if !activeReport.description}
-                               <p class="text-[10px] italic text-neutral-400">No meta description found on this page.</p>
-                            {/if}
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-                    
-                    {#if showFullDesc}
-                      <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-                        <button 
-                          class="absolute inset-0 bg-black/50"
-                          aria-label="Close description"
-                          onclick={() => showFullDesc = false}
-                        ></button>
-                        <div 
-                          class="relative max-w-xl w-full rounded-2xl bg-white p-6 shadow-2xl dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800"
-                          role="dialog"
-                          aria-modal="true"
-                          aria-labelledby="modal-title"
-                          tabindex="-1"
-                          onclick={(e) => e.stopPropagation()}
-                          onkeydown={(e) => e.stopPropagation()}
-                        >
-                          <div class="mb-4 flex items-center justify-between">
-                            <h3 id="modal-title" class="text-base font-bold dark:text-white">Full Description</h3>
-                            <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => showFullDesc = false}>
-                              <InfoIcon size={16} />
-                            </Button>
-                          </div>
-                          <p class="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
-                            {activeReport.description}
-                          </p>
-                          <div class="mt-6 flex justify-end">
-                            <Button variant="default" size="sm" onclick={() => showFullDesc = false}>Close</Button>
-                          </div>
-                        </div>
-                      </div>
-                    {/if}
+										{#if activeReport.performance}
+											<!-- Performance Card -->
+											<section
+												class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+											>
+												<div class="mb-6 flex items-center gap-2">
+													<Gauge size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														Performance
+													</h2>
+												</div>
+												<div class="grid grid-cols-2 gap-6">
+													<div class="flex flex-col border-l border-[var(--whois-border)] pl-3">
+														<span
+															class="mb-1 text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+															>Page Size</span
+														>
+														<span class="text-xs font-bold text-[var(--whois-text)]"
+															>{activeReport.performance.pageSize} KB</span
+														>
+													</div>
+													<div class="flex flex-col border-l border-[var(--whois-border)] pl-3">
+														<span
+															class="mb-1 text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+															>DOM Nodes</span
+														>
+														<span class="text-xs font-bold text-[var(--whois-text)]"
+															>{activeReport.performance.domNodes}</span
+														>
+													</div>
+													<div
+														class="col-span-2 flex flex-col border-l border-[var(--whois-border)] pl-3"
+													>
+														<span
+															class="mb-1 text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+															>Compression</span
+														>
+														<span class="text-xs font-bold text-[var(--whois-accent)] uppercase"
+															>{activeReport.performance.compression}</span
+														>
+													</div>
+												</div>
+											</section>
+										{/if}
 
-                    {#if activeReport.socialLinks && activeReport.socialLinks.length > 0}
-                    <!-- Socials Card -->
-                    <section class="rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                      <div class="mb-4 flex items-center gap-2">
-                        <ShareIcon size={18} class="text-neutral-500" />
-                        <h2 class="text-lg font-semibold dark:text-white">Social Links</h2>
-                      </div>
-                      <div class="grid grid-cols-1 gap-2">
-                        {#each activeReport.socialLinks as social}
-                          <a 
-                            href={social.url} 
-                            target="_blank"
-                            class="flex items-center justify-between rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 transition-colors hover:bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-                          >
-                            <span class="text-xs font-medium dark:text-white">{social.platform}</span>
-                            <ExternalLinkIcon size={12} class="text-neutral-400" />
-                          </a>
-                        {/each}
-                      </div>
-                    </section>
-                    {/if}
+										{#if activeReport.accessibility}
+											<!-- Accessibility Card -->
+											<section
+												class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+											>
+												<div class="mb-6 flex items-center gap-2">
+													<ShieldCheck size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														Accessibility
+													</h2>
+												</div>
+												<div class="space-y-6">
+													<div class="space-y-3">
+														<div class="flex items-center justify-between px-1">
+															<span
+																class="text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+																>Health Score</span
+															>
+															<span class="text-xs font-bold text-[var(--whois-accent)]"
+																>{activeReport.accessibility.score}%</span
+															>
+														</div>
+														<div class="h-1 w-full bg-[var(--whois-surface-2)]">
+															<div
+																class="h-full bg-[var(--whois-accent)] transition-all duration-1000"
+																style="width: {activeReport.accessibility.score}%"
+															></div>
+														</div>
+													</div>
+													<div class="grid grid-cols-1 gap-3">
+														<div
+															class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<span
+																class="text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+																>Alt Tags</span
+															>
+															<span
+																class="text-[10px] font-black {activeReport.accessibility
+																	.missingAltTags > 0
+																	? 'text-red-500'
+																	: 'text-[var(--whois-accent)]'}"
+															>
+																{activeReport.accessibility.missingAltTags === 0
+																	? 'PERFECT'
+																	: `${activeReport.accessibility.missingAltTags} MISSING`}
+															</span>
+														</div>
+														<div
+															class="flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2"
+														>
+															<span
+																class="text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+																>ARIA</span
+															>
+															<span
+																class="text-[10px] font-black text-[var(--whois-text)] uppercase"
+																>{activeReport.accessibility.hasAriaLabels
+																	? 'DETECTED'
+																	: 'NONE'}</span
+															>
+														</div>
+													</div>
+												</div>
+											</section>
+										{/if}
 
-                    <!-- Component Export Card -->
-                    <section class="overflow-hidden rounded-2xl border border-neutral-950 bg-neutral-900 p-6 text-white dark:border-neutral-800 dark:bg-neutral-950">
-                      <div class="mb-4 flex items-center gap-2">
-                        <CodeIcon size={18} class="text-neutral-400" />
-                        <h2 class="text-lg font-semibold">Export Component</h2>
-                      </div>
-                      <p class="mb-4 text-xs text-neutral-400">
-                        Get a polished React or Svelte component snippet featuring this site's branding.
-                      </p>
-                      <Button 
-                        variant="default" 
-                        size="sm"
-                        class="w-full bg-white text-neutral-950 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-white"
-                        onclick={() => copyToClipboard(generateComponent(), 'React Component')}
-                      >
-                        Copy Code Snippet
-                      </Button>
-                    </section>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    {:else}
-      <div class="mx-auto max-w-2xl px-4 py-20 text-center">
-        <h1 class="text-2xl font-bold dark:text-white">No data found</h1>
-        <Button variant="outline" href="/" class="mt-4">Go Back Home</Button>
-      </div>
-    {/if}
-  {:catch error}
-    <div class="mx-auto max-w-2xl px-4 py-20 text-center" in:fade>
-      <div class="mb-6 flex justify-center">
-        <div class="rounded-full bg-red-100 p-4 dark:bg-red-900/30">
-          <InfoIcon size={40} class="text-red-600 dark:text-red-400" />
-        </div>
-      </div>
-      <h1 class="text-2xl font-bold dark:text-white">Scan Failed</h1>
-      <p class="mt-2 text-neutral-600 dark:text-neutral-400">
-        {error.message || 'An unknown error occurred during the scan.'}
-      </p>
-      <div class="mt-8">
-        <Button variant="outline" href="/">Go Back Home</Button>
-      </div>
-    </div>
-  {/await}
+										<section
+											class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+										>
+											<div class="mb-6 flex items-center gap-2">
+												<InfoIcon size={18} class="text-[var(--whois-accent)]" />
+												<h2
+													class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+												>
+													Metadata
+												</h2>
+											</div>
+											<div class="space-y-6">
+												<div class="overflow-hidden">
+													<span
+														class="mb-2 block text-[8px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+														>Meta Title</span
+													>
+													<p class="text-xs font-bold break-words text-[var(--whois-text)]">
+														{activeReport.title}
+													</p>
+												</div>
+												<div class="h-px bg-[var(--whois-border)]"></div>
+												<div>
+													<span
+														class="mb-2 block text-[8px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase"
+														>Description</span
+													>
+													<div class="relative">
+														<p
+															class="line-clamp-3 text-xs leading-relaxed text-[var(--whois-text-muted)]"
+														>
+															{activeReport.description || 'No description detected.'}
+														</p>
+														{#if activeReport.description && activeReport.description.length > 150}
+															<button
+																onclick={() => (showFullDesc = true)}
+																class="mt-2 text-[9px] font-bold tracking-widest text-[var(--whois-accent)] uppercase hover:underline"
+															>
+																Full View
+															</button>
+														{/if}
+														{#if !activeReport.description}
+															<p
+																class="text-[9px] tracking-widest text-[var(--whois-text-dim)] uppercase italic"
+															>
+																NULL
+															</p>
+														{/if}
+													</div>
+												</div>
+											</div>
+										</section>
+
+										{#if showFullDesc}
+											<div
+												class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm"
+											>
+												<button
+													class="absolute inset-0 bg-black/50"
+													aria-label="Close description"
+													onclick={() => (showFullDesc = false)}
+												></button>
+												<div
+													class="relative w-full max-w-xl border border-neutral-200 bg-white p-6 shadow-2xl dark:border-neutral-800 dark:bg-neutral-900"
+													role="dialog"
+													aria-modal="true"
+													aria-labelledby="modal-title"
+													tabindex="-1"
+													onclick={(e) => e.stopPropagation()}
+													onkeydown={(e) => e.stopPropagation()}
+												>
+													<div class="mb-4 flex items-center justify-between">
+														<h3 id="modal-title" class="text-base font-bold dark:text-white">
+															Full Description
+														</h3>
+														<Button
+															variant="ghost"
+															size="icon"
+															class="h-8 w-8"
+															onclick={() => (showFullDesc = false)}
+														>
+															<InfoIcon size={16} />
+														</Button>
+													</div>
+													<p class="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+														{activeReport.description}
+													</p>
+													<div class="mt-6 flex justify-end">
+														<Button
+															variant="default"
+															size="sm"
+															onclick={() => (showFullDesc = false)}>Close</Button
+														>
+													</div>
+												</div>
+											</div>
+										{/if}
+
+										{#if activeReport.socialLinks && activeReport.socialLinks.length > 0}
+											<!-- Social Links Card -->
+											<section
+												class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-6"
+											>
+												<div class="mb-6 flex items-center gap-2">
+													<ShareIcon size={18} class="text-[var(--whois-accent)]" />
+													<h2
+														class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent)] uppercase"
+													>
+														Social Links
+													</h2>
+												</div>
+												<div class="grid grid-cols-1 gap-3">
+													{#each activeReport.socialLinks as social}
+														<a
+															href={social.url}
+															target="_blank"
+															class="group flex items-center justify-between border border-[var(--whois-border)] bg-[var(--whois-surface-2)] px-3 py-2 transition-all hover:border-[var(--whois-accent)]"
+														>
+															<span class="text-xs font-bold text-[var(--whois-text)]"
+																>{social.platform}</span
+															>
+															<ExternalLinkIcon
+																size={12}
+																class="text-[var(--whois-text-dim)] transition-colors group-hover:text-[var(--whois-accent)]"
+															/>
+														</a>
+													{/each}
+												</div>
+											</section>
+										{/if}
+
+										<!-- Component Export Card -->
+										<section
+											class="border border-[var(--whois-accent-blue)] bg-[var(--whois-accent-blue)]/5 p-6"
+										>
+											<div class="mb-4 flex items-center gap-2">
+												<CodeIcon size={18} class="text-[var(--whois-accent-blue)]" />
+												<h2
+													class="text-xs font-bold tracking-[0.2em] text-[var(--whois-accent-blue)] uppercase"
+												>
+													Export Component
+												</h2>
+											</div>
+											<p
+												class="mb-6 text-[10px] leading-relaxed font-bold tracking-widest text-[var(--whois-accent-blue)] uppercase opacity-70"
+											>
+												Export a production-ready snippet based on the discovered styles.
+											</p>
+											<button
+												class="h-10 w-full bg-[var(--whois-accent-blue)] text-[10px] font-black tracking-[0.2em] text-white uppercase transition-all hover:brightness-110 active:scale-[0.98]"
+												onclick={() => copyToClipboard(generateComponent(), 'React Component')}
+											>
+												Copy Snippet
+											</button>
+										</section>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		{:else}
+			<div class="mx-auto max-w-2xl px-4 py-20 text-center font-mono">
+				<div class="mb-8 flex justify-center">
+					<div class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-8">
+						<AlertCircle size={48} class="text-[var(--whois-text-dim)]" />
+					</div>
+				</div>
+				<h1 class="mb-4 text-3xl font-black tracking-tighter text-[var(--whois-text)] uppercase">
+					Null_Response_Received
+				</h1>
+				<p
+					class="text-xs leading-relaxed font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+				>
+					The requested data stream could not be found or has been purged.
+				</p>
+				<div class="mt-12">
+					<a
+						href="/"
+						class="border border-[var(--whois-border)] px-8 py-3 text-[10px] font-black tracking-widest text-[var(--whois-text)] uppercase transition-all hover:border-[var(--whois-accent)] hover:text-[var(--whois-accent)]"
+						>Re-Entry</a
+					>
+				</div>
+			</div>
+		{/if}
+	{:catch error}
+		<div class="mx-auto max-w-2xl px-4 py-20 text-center" in:fade>
+			<div class="mb-6 flex justify-center">
+				<div class="border border-red-200 bg-red-100 p-4 dark:border-red-900/50 dark:bg-red-900/30">
+					<InfoIcon size={40} class="text-red-600 dark:text-red-400" />
+				</div>
+			</div>
+			<h1 class="text-2xl font-bold dark:text-white">Scan Failed</h1>
+			<p class="mt-2 text-neutral-600 dark:text-neutral-400">
+				{error.message || 'An unknown error occurred during the scan.'}
+			</p>
+			<div class="mt-8">
+				<Button variant="outline" href="/">Go Back Home</Button>
+			</div>
+		</div>
+	{/await}
 {/if}
 
 {#if isMapOpen && (report?.latitude || report?.location)}
-  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" transition:fade={{ duration: 150 }} onclick={() => isMapOpen = false}>
-    <div class="w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-none overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800" onclick={(e) => e.stopPropagation()} transition:fly={{ y: 10, duration: 150 }}>
-      <div class="p-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <MapPin size={16} class="text-[#7bc5e4]" />
-          <span class="text-xs font-black tracking-tight dark:text-white uppercase">Server Location</span>
-        </div>
-        <button onclick={() => isMapOpen = false} class="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-          <CloseIcon size={16} class="text-neutral-500" />
-        </button>
-      </div>
-      <div class="aspect-video w-full bg-neutral-100 dark:bg-neutral-800 relative">
-        {#if report?.latitude && report?.longitude}
-          <iframe
-            title="Map"
-            width="100%"
-            height="100%"
-            frameborder="0"
-            src="https://www.openstreetmap.org/export/embed.html?bbox={report.longitude-0.1},{report.latitude-0.1},{report.longitude+0.1},{report.latitude+0.1}&layer=mapnik&marker={report.latitude},{report.longitude}"
-            class="opacity-100 dark:invert-[0.9] dark:hue-rotate-180 dark:brightness-[1.1] dark:contrast-[0.9]"
-          ></iframe>
-        {:else}
-          <div class="absolute inset-0 flex items-center justify-center flex-col gap-2">
-            <Globe size={32} class="text-neutral-300 animate-pulse" />
-            <p class="text-xs font-bold text-neutral-400">Map unavailable</p>
-          </div>
-        {/if}
-      </div>
-      <div class="p-3 bg-neutral-50 dark:bg-neutral-950/50 flex items-center justify-between gap-4">
-        <div class="min-w-0">
-          <span class="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-0.5">Location</span>
-          <p class="text-xs font-bold text-neutral-700 dark:text-neutral-300 truncate">{report?.location || 'Unknown Location'}</p>
-        </div>
-        <a 
-          href="https://www.openstreetmap.org/search?query={encodeURIComponent(report?.location || '')}" 
-          target="_blank" 
-          class="h-8 w-8 flex items-center justify-center text-neutral-500 hover:text-[#7bc5e4] transition-colors shrink-0"
-        >
-          <ExternalLinkIcon size={18} />
-        </a>
-      </div>
-    </div>
-  </div>
+	<div
+		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+		onclick={() => (isMapOpen = false)}
+	>
+		<div
+			class="w-full max-w-2xl border border-[var(--whois-border)] bg-[var(--whois-bg)] shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			transition:fly={{ y: 10, duration: 150 }}
+		>
+			<div
+				class="flex items-center justify-between border-b border-[var(--whois-border)] bg-[var(--whois-surface)] p-3"
+			>
+				<div class="flex items-center gap-2">
+					<MapPin size={16} class="text-[var(--whois-accent)]" />
+					<span class="text-[10px] font-black tracking-widest text-[var(--whois-accent)] uppercase"
+						>Server Location</span
+					>
+				</div>
+				<button
+					onclick={() => (isMapOpen = false)}
+					class="p-1 text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+				>
+					<CloseIcon size={16} />
+				</button>
+			</div>
+			<div class="relative aspect-video w-full bg-[var(--whois-bg)]">
+				{#if report?.latitude && report?.longitude}
+					<iframe
+						title="Map"
+						width="100%"
+						height="100%"
+						frameborder="0"
+						src="https://www.openstreetmap.org/export/embed.html?bbox={report.longitude -
+							0.1},{report.latitude - 0.1},{report.longitude + 0.1},{report.latitude +
+							0.1}&layer=mapnik&marker={report.latitude},{report.longitude}"
+						class="opacity-100 brightness-[1.1] contrast-[0.9] hue-rotate-180 invert-[0.9]"
+					></iframe>
+				{:else}
+					<div class="absolute inset-0 flex flex-col items-center justify-center gap-2">
+						<Globe size={32} class="animate-pulse text-[var(--whois-text-dim)]" />
+						<p
+							class="text-[10px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+						>
+							Map unavailable
+						</p>
+					</div>
+				{/if}
+			</div>
+			<div
+				class="flex items-center justify-between gap-4 border-t border-[var(--whois-border)] bg-[var(--whois-surface)] p-4"
+			>
+				<div class="min-w-0">
+					<span
+						class="mb-1 block text-[8px] font-black tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+						>Coordinates_Detected</span
+					>
+					<p class="truncate text-xs font-bold text-[var(--whois-text)]">
+						{report?.location || 'Unknown Location'}
+					</p>
+				</div>
+				<a
+					href="https://www.openstreetmap.org/search?query={encodeURIComponent(
+						report?.location || ''
+					)}"
+					target="_blank"
+					class="flex h-10 items-center justify-center border border-[var(--whois-border)] px-4 text-[10px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase transition-all hover:border-[var(--whois-accent)] hover:text-[var(--whois-accent)]"
+				>
+					Explore
+				</a>
+			</div>
+		</div>
+	</div>
 {/if}
 
 {#if selectedAsset}
-  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" transition:fade={{ duration: 150 }} onclick={() => selectedAsset = null}>
-    <div class="w-full max-w-4xl bg-white dark:bg-neutral-900 rounded-none overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800" onclick={(e) => e.stopPropagation()} transition:fly={{ y: 10, duration: 150 }}>
-      <div class="p-3 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900">
-        <div class="flex items-center gap-2 min-w-0">
-          <div class="h-6 w-6 rounded bg-neutral-50 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-            {#if selectedAsset.fileType === 'image'}
-              <FileImage size={12} class="text-blue-500" />
-            {:else if selectedAsset.fileType === 'script'}
-              <FileCode size={12} class="text-yellow-500" />
-            {:else}
-              <FileText size={12} class="text-neutral-500" />
-            {/if}
-          </div>
-          <span class="text-xs font-black tracking-tight dark:text-white uppercase truncate">{selectedAsset.name}</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <a href={selectedAsset.url} target="_blank" class="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-            <ExternalLinkIcon size={14} />
-          </a>
-          <button onclick={() => selectedAsset = null} class="p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-            <CloseIcon size={16} class="text-neutral-500" />
-          </button>
-        </div>
-      </div>
-      
-      <div class="max-h-[70vh] overflow-auto bg-neutral-50 dark:bg-neutral-950 p-0 relative min-h-[400px]">
-        {#if selectedAsset.fileType === 'image'}
-          <div class="flex items-center justify-center p-8 min-h-[400px]">
-            {#if assetError}
-              <div class="flex flex-col items-center gap-3 text-neutral-400">
-                <AlertCircle size={32} />
-                <span class="text-xs font-bold uppercase tracking-widest">Asset Not Available</span>
-                <p class="text-[10px] max-w-[200px] text-center opacity-60">The image could not be loaded. It might be protected or no longer exists.</p>
-              </div>
-            {:else}
-              <img 
-                src={selectedAsset.url} 
-                alt={selectedAsset.name} 
-                class="max-w-full h-auto shadow-lg border border-neutral-200 dark:border-neutral-800" 
-                onerror={() => assetError = true}
-              />
-            {/if}
-          </div>
-        {:else if isAssetLoading}
-          <div class="absolute inset-0 flex items-center justify-center flex-col gap-3">
-            <Loader2 size={24} class="text-neutral-400 animate-spin" />
-            <span class="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Fetching & Formatting...</span>
-          </div>
-        {:else}
-          <div class="p-4 font-mono text-[11px] leading-relaxed dark:text-neutral-300">
-            <pre class="whitespace-pre overflow-x-auto">
-              {@html assetContent || '// No content available.'}
+	<div
+		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+		onclick={() => (selectedAsset = null)}
+	>
+		<div
+			class="w-full max-w-4xl border border-[var(--whois-border)] bg-[var(--whois-bg)] shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			transition:fly={{ y: 10, duration: 150 }}
+		>
+			<div
+				class="flex items-center justify-between border-b border-[var(--whois-border)] bg-[var(--whois-surface)] p-3"
+			>
+				<div class="flex min-w-0 items-center gap-3">
+					<div
+						class="flex h-8 w-8 shrink-0 items-center justify-center border border-[var(--whois-border)] bg-[var(--whois-surface-2)]"
+					>
+						{#if selectedAsset.fileType === 'image'}
+							<FileImage size={14} class="text-purple-500" />
+						{:else if selectedAsset.fileType === 'script'}
+							<FileCode size={14} class="text-[var(--whois-accent)]" />
+						{:else}
+							<FileText size={14} class="text-[var(--whois-text-muted)]" />
+						{/if}
+					</div>
+					<span
+						class="truncate text-[10px] font-black tracking-widest text-[var(--whois-text)] uppercase"
+						>{selectedAsset.name}</span
+					>
+				</div>
+				<div class="flex items-center gap-4">
+					<a
+						href={selectedAsset.url}
+						target="_blank"
+						class="text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+					>
+						<ExternalLinkIcon size={14} />
+					</a>
+					<button
+						onclick={() => (selectedAsset = null)}
+						class="text-[var(--whois-text-muted)] transition-colors hover:text-red-500"
+					>
+						<CloseIcon size={18} />
+					</button>
+				</div>
+			</div>
+
+			<div class="relative max-h-[70vh] min-h-[400px] overflow-auto bg-[var(--whois-bg)] p-0">
+				{#if selectedAsset.fileType === 'image'}
+					<div class="flex min-h-[400px] items-center justify-center p-8">
+						{#if assetError}
+							<div class="flex flex-col items-center gap-3 text-[var(--whois-text-dim)]">
+								<AlertCircle size={32} />
+								<span class="text-[10px] font-black tracking-widest uppercase">Asset_Missing</span>
+								<p class="max-w-[200px] text-center text-[8px] tracking-wider uppercase opacity-60">
+									The resource could not be retrieved from the target host.
+								</p>
+							</div>
+						{:else}
+							<img
+								src={selectedAsset.url}
+								alt={selectedAsset.name}
+								class="h-auto max-w-full border border-[var(--whois-border)]"
+								onerror={() => (assetError = true)}
+							/>
+						{/if}
+					</div>
+				{:else if isAssetLoading}
+					<div class="absolute inset-0 flex flex-col items-center justify-center gap-3">
+						<Loader2 size={24} class="animate-spin text-[var(--whois-accent)]" />
+						<span
+							class="animate-pulse text-[8px] font-black tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+							>Scanning_Source...</span
+						>
+					</div>
+				{:else}
+					<div class="p-6 font-mono text-[11px] leading-relaxed text-[var(--whois-text-muted)]">
+						<pre
+							class="overflow-x-auto whitespace-pre selection:bg-[var(--whois-accent)] selection:text-black">
+              {@html assetContent || '// NULL_CONTENT'}
             </pre>
-          </div>
-        {/if}
-      </div>
-      
-      <div class="p-2 border-t border-neutral-100 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center justify-between">
-        <span class="text-[9px] font-black uppercase text-neutral-400 tracking-tighter truncate max-w-[70%] px-2">
-          {selectedAsset.url}
-        </span>
-        <button 
-          onclick={() => copyToClipboard(selectedAsset.url, 'Asset URL')}
-          class="text-[9px] font-black uppercase text-[#7bc5e4] hover:underline px-2"
-        >
-          Copy URL
-        </button>
-      </div>
-    </div>
-  </div>
+					</div>
+				{/if}
+			</div>
+
+			<div
+				class="flex items-center justify-between gap-4 border-t border-[var(--whois-border)] bg-[var(--whois-surface)] p-4"
+			>
+				<span
+					class="flex-1 truncate px-2 text-[8px] font-black tracking-widest text-[var(--whois-text-dim)] uppercase"
+				>
+					{selectedAsset.url}
+				</span>
+				<button
+					onclick={() => copyToClipboard(selectedAsset.url, 'Asset URL')}
+					class="px-2 text-[9px] font-black tracking-widest text-[var(--whois-accent)] uppercase hover:underline"
+				>
+					Copy_Link
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}
 
 {#if isProviderModalOpen && report?.provider}
-  {@const provider = findProvider(report.provider)}
-  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" transition:fade={{ duration: 150 }} onclick={() => isProviderModalOpen = false}>
-    <div class="w-full max-w-2xl bg-white dark:bg-neutral-900 rounded-none overflow-hidden shadow-2xl border border-neutral-200 dark:border-neutral-800" onclick={(e) => e.stopPropagation()} transition:fly={{ y: 10, duration: 150 }}>
-      <div class="p-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="h-10 w-10 rounded bg-[#7bc5e41a] flex items-center justify-center">
-            <Server size={20} class="text-[#7bc5e4]" />
-          </div>
-          <div class="flex flex-col">
-            <h3 class="font-black tracking-tight dark:text-white uppercase text-sm">Infrastructure Details</h3>
-            <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Network Analysis</span>
-          </div>
-        </div>
-        <button onclick={() => isProviderModalOpen = false} class="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-          <CloseIcon size={18} class="text-neutral-500" />
-        </button>
-      </div>
+	{@const provider = findProvider(report.provider)}
+	<div
+		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+		onclick={() => (isProviderModalOpen = false)}
+	>
+		<div
+			class="w-full max-w-2xl border border-[var(--whois-border)] bg-[var(--whois-bg)] shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			transition:fly={{ y: 10, duration: 150 }}
+		>
+			<div
+				class="flex items-center justify-between border-b border-[var(--whois-border)] bg-[var(--whois-surface)] p-4"
+			>
+				<div class="flex items-center gap-3">
+					<div
+						class="flex h-10 w-10 items-center justify-center border border-[var(--whois-border)] bg-[var(--whois-surface-2)]"
+					>
+						<Server size={20} class="text-[var(--whois-accent)]" />
+					</div>
+					<div class="flex flex-col">
+						<h3 class="text-xs font-black tracking-[0.2em] text-[var(--whois-accent)] uppercase">
+							Infrastructure_Node
+						</h3>
+						<span
+							class="text-[8px] font-bold tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+							>Tracing...</span
+						>
+					</div>
+				</div>
+				<button
+					onclick={() => (isProviderModalOpen = false)}
+					class="text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+				>
+					<CloseIcon size={20} />
+				</button>
+			</div>
 
-      <div class="p-8 bg-white dark:bg-neutral-900">
-        <div class="flex flex-col md:flex-row gap-8 items-start">
-          <div class="flex-1 space-y-6">
-            <div>
-              <div class="flex items-center gap-3 mb-2">
-                <h4 class="text-2xl font-black dark:text-white tracking-tighter">{provider?.name || report.provider}</h4>
-                {#if provider}
-                  <span class="px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[9px] font-black uppercase text-neutral-500 tracking-widest">{provider.category}</span>
-                {/if}
-              </div>
-              <p class="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400 font-medium">
-                {provider?.description || "This infrastructure provider is responsible for hosting and routing the website's data. Our analysis indicates they manage the IP range associated with this server."}
-              </p>
-            </div>
+			<div class="bg-[var(--whois-bg)] p-8">
+				<div class="flex flex-col items-start gap-8 md:flex-row">
+					<div class="flex-1 space-y-8">
+						<div>
+							<div class="mb-4 flex items-center gap-3">
+								<h4 class="text-3xl font-black tracking-tighter text-[var(--whois-text)] uppercase">
+									{provider?.name || report.provider}
+								</h4>
+								{#if provider}
+									<div
+										class="border border-[var(--whois-border)] bg-[var(--whois-accent-dim)] px-2 py-0.5 text-[8px] font-black tracking-widest text-[var(--whois-accent)] uppercase"
+									>
+										{provider.category}
+									</div>
+								{/if}
+							</div>
+							<p
+								class="text-xs leading-relaxed font-bold tracking-widest text-[var(--whois-text-muted)] uppercase opacity-80"
+							>
+								{provider?.description ||
+									"This infrastructure provider is responsible for hosting and routing the website's data. Network metrics confirm their management of this server's specific IP range."}
+							</p>
+						</div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div class="p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
-                <span class="text-[9px] font-black uppercase text-neutral-400 block mb-1">Entity Name</span>
-                <span class="text-xs font-bold dark:text-white">{report.provider}</span>
-              </div>
-              <div class="p-4 bg-neutral-50 dark:bg-neutral-950 border border-neutral-100 dark:border-neutral-800">
-                <span class="text-[9px] font-black uppercase text-neutral-400 block mb-1">Server IP</span>
-                <span class="text-xs font-bold dark:text-white font-mono">{report.ip}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+						<div class="grid grid-cols-2 gap-4">
+							<div class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-4">
+								<span
+									class="mb-2 block text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+									>Entity_ID</span
+								>
+								<span class="text-xs font-bold text-[var(--whois-text)] uppercase"
+									>{report.provider}</span
+								>
+							</div>
+							<div class="border border-[var(--whois-border)] bg-[var(--whois-surface)] p-4">
+								<span
+									class="mb-2 block text-[8px] font-black tracking-widest text-[var(--whois-text-muted)] uppercase"
+									>IPV4_Endpoint</span
+								>
+								<span class="font-mono text-xs font-bold text-[var(--whois-accent)]"
+									>{report.ip}</span
+								>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-      <div class="p-4 bg-neutral-50 dark:bg-neutral-950/50 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <ShieldCheck size={14} class="text-green-500" />
-          <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Verified Infrastructure</span>
-        </div>
-        {#if provider}
-          <a 
-            href={provider.website} 
-            target="_blank" 
-            class="inline-flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#1e3a8a]/20"
-          >
-            Visit Website
-            <ExternalLinkIcon size={12} />
-          </a>
-        {/if}
-      </div>
-    </div>
-  </div>
+			<div
+				class="flex items-center justify-between border-t border-[var(--whois-border)] bg-[var(--whois-surface)] p-4"
+			>
+				<div class="flex items-center gap-2">
+					<ShieldCheck size={14} class="text-[var(--whois-accent)]" />
+					<span
+						class="text-[8px] font-black tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
+						>Verified_Stack</span
+					>
+				</div>
+				{#if provider}
+					<a
+						href={provider.website}
+						target="_blank"
+						class="inline-flex items-center gap-2 bg-[var(--whois-accent-blue)] px-6 py-2 text-[10px] font-black tracking-widest text-white uppercase transition-all hover:brightness-110"
+					>
+						Visit Host
+						<ExternalLinkIcon size={12} />
+					</a>
+				{/if}
+			</div>
+		</div>
+	</div>
 {/if}
+
+<style>
+	:global(body) {
+		overflow: hidden !important;
+		overscroll-behavior: none !important;
+		background-color: var(--whois-sidebar);
+	}
+
+	/* SVGL Inspired Grid & Spotlight */
+	.svgl-bg {
+		background-image:
+			radial-gradient(circle at 50% -20%, rgba(148, 163, 184, 0.08) 0%, transparent 60%),
+			radial-gradient(circle at 50% 50%, var(--whois-bg) 0%, var(--whois-bg) 100%),
+			url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h1v1H1V1z' fill='%231a1a1a' fill-opacity='0.4'/%3E%3C/svg%3E");
+		background-attachment: local;
+	}
+
+	/* Custom Scrollbar */
+	.custom-scrollbar::-webkit-scrollbar {
+		width: 4px;
+		height: 4px;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb {
+		background: var(--whois-border);
+	}
+
+	.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+		background: var(--whois-accent);
+	}
+
+	/* Selection */
+	:global(::selection) {
+		background: var(--whois-accent);
+		color: var(--whois-accent-text);
+	}
+
+	/* Typography Refinements */
+	:global(h1, h2, h3, h4, h5, h6) {
+		letter-spacing: -0.05em;
+	}
+
+	/* Layout Fixes */
+	.grid {
+		gap: 1.5rem;
+	}
+
+	section {
+		transition: none;
+		background-color: rgba(15, 15, 15, 0.5); /* Semi-transparent SVGL cards */
+		backdrop-filter: blur(8px);
+	}
+
+	/* Animation */
+	@keyframes scanline {
+		0% {
+			transform: translateY(-100%);
+		}
+		100% {
+			transform: translateY(100%);
+		}
+	}
+
+	.scanline {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 1px;
+		background: rgba(100, 116, 139, 0.02);
+		z-index: 9999;
+		pointer-events: none;
+		animation: scanline 15s linear infinite;
+	}
+</style>

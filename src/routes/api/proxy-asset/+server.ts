@@ -20,11 +20,11 @@ export const GET: RequestHandler = async ({ url }) => {
     }
 
     const contentType = response.headers.get('content-type');
-    const body = await response.text();
+    const body = await response.arrayBuffer();
 
     return new Response(body, {
       headers: {
-        'Content-Type': contentType || 'text/plain',
+        'Content-Type': contentType || 'application/octet-stream',
         'Cache-Control': 'public, max-age=3600'
       }
     });

@@ -29,7 +29,7 @@ export async function getNetworkOnlyReport(domain: string): Promise<Partial<Site
 
   // Resolve IP Info from the first A record
   let firstA = dnsRecords.find(r => r.type === 'A')?.value;
-  
+
   // If no A record found for the subdomain (e.g. www), try the root domain
   if (!firstA && domain.split('.').length > 2) {
     const rootDomain = domain.split('.').slice(-2).join('.');
@@ -88,39 +88,39 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
       try {
         const apiKey = env.SCRAPINGANT_API_KEY;
         if (!apiKey) {
-           console.error("[scanner.ts] SCRAPINGANT_API_KEY is missing!");
-           throw new Error("SCRAPINGANT_API_KEY environment variable is not set. Cannot bypass Cloudflare.");
+          console.error("[scanner.ts] SCRAPINGANT_API_KEY is missing!");
+          throw new Error("SCRAPINGANT_API_KEY environment variable is not set. Cannot bypass Cloudflare.");
         }
-        
+
         // Added browser=false to make the fetch 10x faster (bypasses headless Chrome, just uses proxy network)
         const proxyUrl = `https://api.scrapingant.com/v2/general?url=${encodeURIComponent(targetUrl)}&x-api-key=${apiKey}&browser=false`;
         console.log(`[scanner.ts] Fetching from ScrapingAnt...`);
         let proxyResponse = await fetchWithTimeout(proxyUrl, {}, 15000);
         console.log(`[scanner.ts] ScrapingAnt responded with status: ${proxyResponse.status}`);
-        
+
         let proxyText = await proxyResponse.text();
 
         // Handle 409 Concurrency Limit (Free tier only allows 1 request at a time)
         if (proxyResponse.status === 409) {
-           console.log(`[scanner.ts] Hit ScrapingAnt concurrency limit (409). Waiting 2.5s and retrying...`);
-           await new Promise(resolve => setTimeout(resolve, 2500));
-           proxyResponse = await fetchWithTimeout(proxyUrl, {}, 15000);
-           proxyText = await proxyResponse.text();
-           console.log(`[scanner.ts] ScrapingAnt retry status: ${proxyResponse.status}`);
+          console.log(`[scanner.ts] Hit ScrapingAnt concurrency limit (409). Waiting 2.5s and retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 2500));
+          proxyResponse = await fetchWithTimeout(proxyUrl, {}, 15000);
+          proxyText = await proxyResponse.text();
+          console.log(`[scanner.ts] ScrapingAnt retry status: ${proxyResponse.status}`);
         }
-        
+
         if (!proxyResponse.ok) {
-           console.error(`[scanner.ts] ScrapingAnt API error response:`, proxyText);
-           throw new Error(`ScrapingAnt API failed: ${proxyResponse.status} ${proxyText}`);
+          console.error(`[scanner.ts] ScrapingAnt API error response:`, proxyText);
+          throw new Error(`ScrapingAnt API failed: ${proxyResponse.status} ${proxyText}`);
         }
-        
+
         html = proxyText;
         if (!html) throw new Error("Empty response from ScrapingAnt");
-        
+
         // Try to extract the final URL if ScrapingAnt followed redirects
         // Note: ScrapingAnt doesn't easily return the final URL in the 'general' endpoint 
         // without extra metadata, so we'll stick to targetUrl for now but ensured it's set.
-        finalUrl = targetUrl; 
+        finalUrl = targetUrl;
       } catch (proxyErr: any) {
         console.error(`[scanner.ts] ScrapingAnt fallback failed:`, proxyErr);
         throw new Error(`The target website blocked our crawler, and the ScrapingAnt fallback failed. (${proxyErr.message})`);
@@ -167,7 +167,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
 
   // Resolve IP Info from the first A record
   let firstA = dnsRecords.find(r => r.type === 'A')?.value;
-  
+
   // If no A record found for the subdomain (e.g. www), try the root domain
   if (!firstA && domain.split('.').length > 2) {
     const rootDomain = domain.split('.').slice(-2).join('.');
@@ -182,12 +182,12 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   // 1. Basic Info
   const title = $('title').text() || $('meta[property="og:title"]').attr('content') || $('meta[name="twitter:title"]').attr('content') || '';
   const description = $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '';
-  
+
   // Advanced Favicon Detection
   let favicon = '';
   const iconLinks = $('link[rel*="icon"]');
   let bestIcon = '';
-  
+
   iconLinks.each((_, el) => {
     const href = $(el).attr('href');
     if (href) {
@@ -210,7 +210,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     // Fallback to Google's favicon service for maximum reliability
     favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   }
-  
+
   // 2. Logo Detection
   const ogImage = $('meta[property="og:image"]').attr('content');
   let logo = ogImage || $('meta[property="og:logo"]').attr('content') || $('img[src*="logo"]').first().attr('src');
@@ -221,7 +221,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   const brandColors: string[] = [];
   const themeColor = $('meta[name="theme-color"]').attr('content');
   if (themeColor) brandColors.push(themeColor);
-  
+
   const hexMatch = html.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g);
   if (hexMatch) {
     const uniqueHex = Array.from(new Set(hexMatch))
@@ -250,7 +250,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     { name: 'Vercel', category: 'Hosting', pattern: /vercel\.app|__vercel/, website: 'https://vercel.com' },
     { name: 'Netlify', category: 'Hosting', pattern: /netlify/, website: 'https://netlify.com' },
     { name: 'Genially', category: 'LMS', pattern: /genial\.ly/, website: 'https://genial.ly' },
-    
+
     // Frameworks & Libraries
     { name: 'Next.js', category: 'Framework', pattern: /__NEXT_DATA__|static\/chunks|next\/image/, website: 'https://nextjs.org' },
     { name: 'React', category: 'Library', pattern: /react-dom|react\.development|react-root/, website: 'https://react.dev' },
@@ -260,40 +260,40 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     { name: 'Astro', category: 'Framework', pattern: /astro-/, website: 'https://astro.build' },
     { name: 'Angular', category: 'Framework', pattern: /ng-version|ng-root/, website: 'https://angular.io' },
     { name: 'jQuery', category: 'Library', pattern: /jquery\.min\.js|jquery-/, website: 'https://jquery.com' },
-    
+
     // UI & Styling
     { name: 'Tailwind CSS', category: 'Styling', pattern: /tailwind\.config|tw-|text-neutral/, website: 'https://tailwindcss.com' },
     { name: 'Bootstrap', category: 'Styling', pattern: /bootstrap\.min\.css|bootstrap-/, website: 'https://getbootstrap.com' },
     { name: 'Framer Motion', category: 'Animation', pattern: /framer-motion/, website: 'https://framer.com/motion' },
     { name: 'GSAP', category: 'Animation', pattern: /gsap|ScrollTrigger/, website: 'https://greensock.com/gsap' },
     { name: 'Three.js', category: 'Graphics', pattern: /three\.js|THREE\./, website: 'https://threejs.org' },
-    
+
     // Analytics & Marketing
     { name: 'Google Analytics', category: 'Analytics', pattern: /googletagmanager\.com|google-analytics\.com|UA-[0-9]+-[0-9]+/, website: 'https://analytics.google.com' },
     { name: 'Umami', category: 'Analytics', pattern: /umami\.js|data-website-id/, website: 'https://umami.is' },
     { name: 'Mixpanel', category: 'Analytics', pattern: /mixpanel\.com/, website: 'https://mixpanel.com' },
     { name: 'Hotjar', category: 'Analytics', pattern: /static\.hotjar\.com/, website: 'https://hotjar.com' },
-    
+
     // CMS & E-commerce
     { name: 'WordPress', category: 'CMS', pattern: /wp-content|wp-includes|WordPress/, website: 'https://wordpress.org' },
     { name: 'Shopify', category: 'E-commerce', pattern: /shopify\.com|cdn\.shopify\.com/, website: 'https://shopify.com' },
     { name: 'Webflow', category: 'CMS', pattern: /webflow\.com|w-custom-css/, website: 'https://webflow.com' },
     { name: 'Magento', category: 'E-commerce', pattern: /magento/i, website: 'https://adobe.com/commerce' },
-    
+
     // Servers & Backend
     { name: 'Nginx', category: 'Web Server', pattern: /nginx/i, header: 'Server' },
     { name: 'Apache', category: 'Web Server', pattern: /apache/i, header: 'Server' },
     { name: 'TypeScript', category: 'Language', pattern: /\.ts|typescript/i, header: 'X-Powered-By' },
     { name: 'PHP', category: 'Language', pattern: /php/i, header: 'X-Powered-By' },
     { name: 'Node.js', category: 'Runtime', pattern: /node\.js|express/i, header: 'X-Powered-By' },
-    
+
     // Payments & Services
     { name: 'Stripe', category: 'Payments', pattern: /js\.stripe\.com/, website: 'https://stripe.com' },
     { name: 'Intercom', category: 'Support', pattern: /intercom\.io/, website: 'https://intercom.com' },
     { name: 'Sentry', category: 'Monitoring', pattern: /sentry\.io/, website: 'https://sentry.io' },
     { name: 'HubSpot', category: 'Marketing', pattern: /js\.hs-scripts\.com|hubspot\.com/, website: 'https://hubspot.com' },
     { name: 'Facebook Pixel', category: 'Marketing', pattern: /connect\.facebook\.net\/en_US\/fbevents\.js/, website: 'https://facebook.com' },
-    
+
     // Fonts & CDNs
     { name: 'Google Fonts', category: 'Fonts', pattern: /fonts\.googleapis\.com/, website: 'https://fonts.google.com' },
     { name: 'Adobe Fonts', category: 'Fonts', pattern: /use\.typekit\.net/, website: 'https://fonts.adobe.com' },
@@ -314,9 +314,9 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     }
 
     if (detected) {
-      techStack.push({ 
-        name: rule.name, 
-        category: rule.category, 
+      techStack.push({
+        name: rule.name,
+        category: rule.category,
         website: rule.website || `https://www.google.com/search?q=${encodeURIComponent(rule.name)}`
       });
     }
@@ -342,10 +342,10 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
 
   // 6. Fonts (Extreme Precision Detection)
   const foundFonts = new Set<string>();
-  
+
   const commonSystem = [
-    'inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 
-    '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 
+    'inherit', 'sans-serif', 'serif', 'monospace', 'cursive', 'fantasy', 'system-ui',
+    '-apple-system', 'blinkmacsystemfont', 'Segoe UI', 'Roboto', 'Helvetica Neue',
     'Arial', 'Helvetica', 'Verdana', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Impact',
     'var(', '--font', 'ui-sans-serif', 'ui-serif', 'ui-monospace'
   ];
@@ -377,7 +377,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   // B. CSS Deep Scan for @font-face & Variables
   const cssBlocks: string[] = [];
   $('style').each((_, el) => { cssBlocks.push($(el).html()); });
-  
+
   cssBlocks.forEach(styleContent => {
     // 1. Resolve @font-face names (The most accurate source for custom fonts)
     const fontFaceMatches = styleContent.match(/font-family:\s*["']?([^;,"'}]+)["']?/gi);
@@ -412,7 +412,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
       const fileName = fileMatch[1].replace(/[-_]/g, ' ');
       // Clean up common suffixes
       const cleanName = fileName.replace(/(regular|bold|italic|medium|light|thin|variable|subset|webfont|latin)/gi, '').trim();
-      
+
       if (cleanName && cleanName.length > 2 && !isTechnicalName(cleanName)) {
         // Capitalize words
         const capitalized = cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -434,7 +434,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   const pageSize = Math.round(new TextEncoder().encode(html).length / 1024);
   const domNodes = $('*').length;
   const compression = response.headers.get('content-encoding') || 'None';
-  
+
   // Accessibility Checks
   const totalImgs = $('img').length;
   const missingAlt = $('img:not([alt])').length + $('img[alt=""]').length;
@@ -443,20 +443,20 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   const h1Count = $('h1').length;
   const hasH1 = h1Count === 1;
   const landmarks = $('header, nav, footer, main, aside').length;
-  
+
   // 8. Red Flags Audit
   const redFlags: RedFlag[] = [];
   const mixedContent = $('img[src^="http://"], script[src^="http://"], link[href^="http://"]').length;
   if (mixedContent > 0 && finalUrl.startsWith('https')) {
     redFlags.push({ type: 'security', message: `Found ${mixedContent} insecure (HTTP) assets on HTTPS page.` });
   }
-  
+
   if (!hasLang) redFlags.push({ type: 'info', message: 'HTML lang attribute is missing.' });
 
   // 9. Subdomain Discovery (via Link Analysis)
   const baseDomain = domain.replace(/^www\./, '');
   const foundSubdomains = new Set<string>();
-  
+
   $('[href], [src]').each((_, el) => {
     const attr = $(el).attr('href') || $(el).attr('src');
     if (attr && attr.includes(baseDomain)) {
@@ -475,7 +475,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     url: `https://${sub}.${baseDomain}`,
     status: 'active'
   }));
-  
+
   if (domain.startsWith('www.')) {
     subdomains.unshift({ name: 'www', url: `https://${domain}`, status: 'active' });
   }
@@ -488,7 +488,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
   if (h1Count > 1) a11yScore -= 5;
   if (totalImgs > 0) a11yScore -= (missingAlt / totalImgs) * 30;
   if (landmarks < 3) a11yScore -= 10;
-  
+
   const finalA11yScore = Math.max(0, Math.min(100, Math.round(a11yScore)));
 
   const cleanName = domain.replace(/^www\./, '').split('.')[0];
@@ -568,7 +568,7 @@ function buildAssetTree($: cheerio.CheerioAPI, baseUrl: string): any[] {
   });
 
   const root: any[] = [];
-  
+
   assets.forEach(asset => {
     const urlObj = new URL(asset.url);
     const parts = urlObj.pathname.split('/').filter(p => p);
@@ -603,16 +603,16 @@ function buildAssetTree($: cheerio.CheerioAPI, baseUrl: string): any[] {
 
 function calculateSecurityScore(ssl: any, headers: any[], mixedContent: number, dns: any[]): string {
   let score = 100;
-  
+
   if (!ssl || ssl.isExpired) score -= 40;
   if (mixedContent > 0) score -= 20;
-  
+
   const hsts = headers.find(h => h.name === 'Strict-Transport-Security' && h.status === 'secure');
   const csp = headers.find(h => h.name === 'Content-Security-Policy' && h.status === 'secure');
-  
+
   if (!hsts) score -= 15;
   if (!csp) score -= 15;
-  
+
   const hasSpf = dns.some(r => r.type === 'TXT' && r.value.includes('v=spf1'));
   if (!hasSpf) score -= 5;
 
@@ -625,7 +625,7 @@ function calculateSecurityScore(ssl: any, headers: any[], mixedContent: number, 
 
 async function discoverCrawling(domain: string, baseUrl: string): Promise<{ sitemap?: string, robots?: string }> {
   const results: { sitemap?: string, robots?: string } = {};
-  
+
   try {
     const robotsUrl = `https://${domain}/robots.txt`;
     const res = await fetchWithTimeout(robotsUrl, {}, 3000);
@@ -635,13 +635,13 @@ async function discoverCrawling(domain: string, baseUrl: string): Promise<{ site
       const sitemapMatch = text.match(/Sitemap:\s*(.+)/i);
       if (sitemapMatch) results.sitemap = sitemapMatch[1].trim();
     }
-    
+
     if (!results.sitemap) {
       const sitemapUrl = `https://${domain}/sitemap.xml`;
       const sRes = await fetchWithTimeout(sitemapUrl, {}, 3000);
       if (sRes.ok) results.sitemap = sitemapUrl;
     }
   } catch { /* ignore */ }
-  
+
   return results;
 }

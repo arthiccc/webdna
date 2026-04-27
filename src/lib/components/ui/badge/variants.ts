@@ -1,7 +1,7 @@
 import { tv, type VariantProps } from "tailwind-variants";
 
 export const badgeVariants = tv({
-  base: "inline-flex items-center cursor-default gap-1.5 font-medium rounded-full border transition-colors hover:text-black dark:hover:text-white ease-in-out",
+  base: "inline-flex items-center cursor-default gap-1.5 font-medium rounded-none border transition-colors hover:text-black dark:hover:text-white ease-in-out",
   variants: {
     variant: {
       default:

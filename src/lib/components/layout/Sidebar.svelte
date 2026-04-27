@@ -2,7 +2,17 @@
 	import { cn } from '$lib/utils';
 	import { page } from '$app/state';
 	import { Separator } from '$lib/components/ui/separator';
-	import { Search, Globe, SwatchBook, ShieldCheck, Gauge, History, Star, Dna } from '@lucide/svelte';
+	import {
+		Search,
+		Globe,
+		SwatchBook,
+		ShieldCheck,
+		Gauge,
+		History,
+		Star,
+		Dna,
+		Users
+	} from '@lucide/svelte';
 
 	let { class: className } = $props<{ class?: string }>();
 
@@ -11,7 +21,8 @@
 	const links = [
 		{ name: 'Inspect', icon: Search, href: '/' },
 		{ name: 'Favorites', icon: Star, href: '/favorites' },
-		{ name: 'History', icon: History, href: '/history' }
+		{ name: 'History', icon: History, href: '/history' },
+		{ name: 'About Us', icon: Users, href: '/about' }
 	];
 
 	const categories = [
@@ -25,46 +36,49 @@
 	class={cn(
 		'md:fixed md:top-0 md:left-0 md:h-screen',
 		'z-50 hidden w-56 flex-col space-y-4 md:flex',
-		'bg-neutral-100 px-2 dark:bg-neutral-950',
+		'bg-[var(--whois-sidebar)] px-3 py-6',
 		className
 	)}
 >
-	<div class="flex h-14 items-center px-6">
-		<h2 class="text-xl font-bold tracking-tight dark:text-white">WebDNA</h2>
+	<div class="mb-6 flex items-center px-4">
+		<h2 class="text-xs font-black tracking-[0.25em] text-[var(--whois-accent)] uppercase">
+			WebDNA
+		</h2>
 	</div>
 
-	<nav class="flex flex-col space-y-1 px-2">
+	<nav class="flex flex-col space-y-1">
 		{#each links as link}
 			<a
 				href={link.href}
 				class={cn(
-					'flex items-center space-x-3 rounded-md px-2 py-2 text-sm font-medium text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-100',
-					page.url.pathname === link.href &&
-						'bg-neutral-200 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100'
+					'flex items-center space-x-3 border border-transparent px-3 py-2 text-[10px] font-bold tracking-widest uppercase transition-all',
+					page.url.pathname === link.href
+						? 'border-[var(--whois-border)] bg-[var(--whois-accent-dim)] text-[var(--whois-accent)]'
+						: 'text-[var(--whois-text-muted)] hover:bg-[var(--whois-surface)] hover:text-[var(--whois-text)]'
 				)}
 			>
-				<link.icon size={18} strokeWidth={1.5} />
+				<link.icon size={14} strokeWidth={2} />
 				<span>{link.name}</span>
 			</a>
 		{/each}
 	</nav>
 
 	{#if $history.length > 0}
-		<div class="mt-4 px-2">
-			<Separator orientation="horizontal" class="mb-4" />
+		<div class="mt-8">
+			<div class="mx-3 mb-6 h-px bg-[var(--whois-border)]"></div>
 			<h3
-				class="mb-2 px-2 text-xs font-semibold tracking-wider text-neutral-400 uppercase dark:text-neutral-500"
+				class="mb-4 px-3 text-[10px] font-black tracking-[0.2em] text-[var(--whois-text-muted)] uppercase"
 			>
-				Recent
+				Recents
 			</h3>
 			<div class="flex flex-col space-y-1">
-				{#each $history.slice(0, 8) as item}
+				{#each $history.slice(0, 12) as item}
 					<a
 						href="/inspect/{encodeURIComponent(item.domain)}"
-						class="flex items-center space-x-2 rounded-md px-2 py-1.5 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-neutral-900 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+						class="flex items-center space-x-3 border border-transparent px-3 py-2.5 text-[11px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-all hover:bg-[var(--whois-surface)] hover:text-[var(--whois-accent)]"
 					>
 						<div
-							class="h-4 w-4 overflow-hidden rounded-[4px] border border-neutral-200 bg-white p-[1px] dark:border-neutral-800 dark:bg-neutral-900"
+							class="h-4 w-4 shrink-0 border border-[var(--whois-border)] bg-[var(--whois-surface)] p-[2px]"
 						>
 							<img
 								src={item.favicon}
@@ -78,7 +92,7 @@
 								}}
 							/>
 						</div>
-						<span class="truncate">{item.name}</span>
+						<span class="truncate">{item.name.replace(/_/g, ' ')}</span>
 					</a>
 				{/each}
 			</div>

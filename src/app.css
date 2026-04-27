@@ -32,15 +32,51 @@
     "Liberation Mono", "Courier New", monospace, "Apple Color Emoji";
 
   --color-neutral-950: #0a0a0a;
+
+  /* Whois Theme Tokens */
+  --whois-accent-blue: #2563eb;
+
+  /* Default Light Mode */
+  --whois-bg: #ffffff;
+  --whois-sidebar: #f8f8f8;
+  --whois-surface: #ffffff;
+  --whois-surface-2: #f3f3f3;
+  --whois-border: #e5e5e5;
+  --whois-accent: #64748b;
+  --whois-accent-dim: rgba(100, 116, 139, 0.05);
+  --whois-accent-text: #ffffff;
+  --whois-text: #1a1a1a;
+  --whois-text-muted: #666666;
+  --whois-text-dim: #999999;
+}
+
+.dark {
+  /* SVGL Inspired Professional Edition */
+  --whois-bg: #0a0a0a;
+  /* Lighter content area */
+  --whois-sidebar: #060606;
+  /* Pure dark background */
+  --whois-surface: #0f0f0f;
+  --whois-surface-2: #141414;
+  --whois-border: #1a1a1a;
+  --whois-accent: #64748b;
+  --whois-accent-dim: rgba(100, 116, 139, 0.05);
+  --whois-accent-text: #ffffff;
+  --whois-text: #ededed;
+  --whois-text-muted: #888888;
+  --whois-text-dim: #444444;
 }
 
 @layer base {
   html {
     scrollbar-gutter: stable;
   }
+
   body {
-    @apply bg-neutral-100 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: var(--whois-sidebar);
+    color: var(--whois-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
   }
 }
 
@@ -69,9 +105,9 @@ html.dark .shiki span {
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0,0,0,0.1) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
 }
 
 .dark * {
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
