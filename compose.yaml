@@ -1,0 +1,9 @@
+services:
+  webdna:
+    image: b1s4/webdna:latest
+    container_name: webdna-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: always
