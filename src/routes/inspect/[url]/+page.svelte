@@ -415,13 +415,13 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content={report.name} />
 		<meta property="og:description" content="Website analysis powered by WebDNA." />
-		<meta property="og:image" content="https://siteglow.xtra.wtf/og-image.png" />
+		<meta property="og:image" content="https://webdna.xtra.wtf/og-image.png" />
 
 		<!-- Twitter -->
 		<meta property="twitter:card" content="summary_large_image" />
 		<meta property="twitter:title" content={report.name} />
 		<meta property="twitter:description" content="Website analysis powered by WebDNA." />
-		<meta property="twitter:image" content="https://siteglow.xtra.wtf/og-image.png" />
+		<meta property="twitter:image" content="https://webdna.xtra.wtf/og-image.png" />
 	{:else}
 		<title>Inspecting...</title>
 	{/if}

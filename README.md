@@ -1,107 +1,44 @@
 # WebDNA
 
-<div align="center">
+**Extract the technical and visual identity of any website in seconds.**
 
-![WebDNA](https://github.com/xtrafr/webdna/blob/main/.github/webdnapreview.png)
+![WebDNA Showcase](.github/showcase.gif)
 
-**See everything behind any website in 1 click.**
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?repo=xtrafr/webdna)
 
-**DNS, infrastructure, security, assets, colors, fonts, all in one clean dashboard.**
+## What it is
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/?repo=xtrafr/webdna)
+WebDNA is an open source scanning engine that analyzes the genetic makeup of a domain. It extracts infrastructure details, tech stacks, brand assets, and security metrics into a unified report. It includes a specialized WHOIS and DNS propagation scanner developed by b1s4.
 
-</div>
+## How it differs from web-check
 
----
+While similar to web-check, WebDNA is designed with three core differences.
+
+1.  **Speed.** WebDNA uses optimized network probes and concurrent scanning to deliver results significantly faster.
+2.  **Visual Intelligence.** Beyond network data, it automatically extracts brand colors, typography, and logo assets.
+3.  **Density.** The dashboard is built for high information density, allowing developers to see the complete technical profile on a single screen.
+
+## Why it matters
+
+Understanding a website often requires multiple browser tabs, specialized CLI tools, and manual inspection. WebDNA automates this process by transforming unstructured web data into a machine readable format. It provides a programmatic way to audit infrastructure and design.
 
 ## Features
 
-**Design DNA**: Automatic extraction of brand colors and precise typography analysis.
-
-**WHOIS Intelligence**: Comprehensive WHOIS and DNS propagation scanner developed by [b1s4](https://github.com/b1s4/).
-
-**DNS Propagation**: Global DNS resolution tracking with interactive world mapping.
-
-**Infrastructure**: Instantly find the IP address, server location, and hosting provider.
-
-**Asset Explorer**: IDE-style file explorer to browse a site's images, scripts, and styles.
-
-**Security Audit**: Real-time audit of SSL certificates, security headers, and domain safety.
-
-**Subdomains**: Automatic mapping of the digital ecosystem surrounding any domain.
-
-**Email Protection**: Detection of SPF and DMARC configurations to prevent spoofing.
-
-**Beautiful UI**: Minimalist, high-density dashboard with smooth animations.
-
----
+*   **Global DNS Propagation.** Real time resolution tracking across multiple global regions.
+*   **WHOIS Intelligence.** Comprehensive domain ownership and registration analysis.
+*   **Infrastructure Analysis.** Resolve hosting providers, IP addresses, and geographic locations.
+*   **Design Extraction.** Identify primary brand colors, typography, and logo assets.
+*   **Tech Stack Detection.** Recognize frameworks, libraries, and third-party services.
+*   **Asset Explorer.** View the file structure of a site including scripts and stylesheets.
+*   **Security Audit.** Detect mixed content and evaluate security policy compliance.
 
 ## Global DNS Propagation
 
-<div align="center">
+![Global DNS Propagation](.github/whoispreview.png)
 
-![Whois Preview](https://github.com/xtrafr/webdna/blob/main/.github/whoispreview.png)
+## Demo
 
-</div>
-
-## Quick Start
-
-### 1. Clone locally
-```bash
-git clone https://github.com/xtrafr/webdna.git
-cd webdna
-npm install
-```
-
-### 2. Environment Variables
-Create a `.env` file in the root directory and add your [ScrapingAnt](https://scrapingant.com/) API key to bypass WAFs:
-```env
-SCRAPINGANT_API_KEY="your_api_key_here"
-```
-
-### 3. Development
-```bash
-npm run dev
-```
-
-## Tech Stack
-
-**Framework**: SvelteKit 5 (Runes)
-
-**Styling**: Tailwind CSS
-
-**Parsing**: Cheerio + Custom Network Probes
-
-**Proxy**: ScrapingAnt API (WAF bypass)
-
-**Icons**: Lucide Svelte
-
-## API Reference
-
-<details>
-<summary><b>Analyze Endpoint</b> (Internal)</summary>
-
-### `GET /inspect/[url]`
-The primary entry point for website analysis. It streams the data using SvelteKit's `streamed` data pattern.
-
-**Parameters:**
-: `url`: The encoded URL to analyze (e.g., `https%3A%2F%2Fgoogle.com`)
-
-**Response:**
-Returns a `report` object containing:
-: `branding`: Logos, favicons, and primary colors.
-: `typography`: Detected font families and weights.
-: `infrastructure`: IP, Provider, and ASN details.
-: `assets`: Full tree of scripts, styles, and images.
-: `dns_propagation`: Real-time global DNS resolution data.
-</details>
-
-<details>
-<summary><b>Asset Proxy</b></summary>
-
-### `GET /api/proxy-asset?url=[url]`
-A security-first proxy to fetch and preview remote assets (CSS/JS) without CORS issues.
-</details>
+[Live Demo](https://webdna.xtra.wtf)
 
 ## Project Structure
 
@@ -118,18 +55,67 @@ webdna/
 └── README.md            # This file
 ```
 
+## Installation
+
+1.  Clone the repository.
+    ```bash
+    git clone https://github.com/xtrafr/webdna.git
+    ```
+
+2.  Install dependencies.
+    ```bash
+    npm install
+    ```
+
+3.  Set up environment variables.
+    Create a .env file in the root directory and add your ScrapingAnt API key.
+    ```env
+    SCRAPINGANT_API_KEY="your_api_key_here"
+    ```
+
+4.  Run in development mode.
+    ```bash
+    npm run dev
+    ```
+
+## Example output
+
+WebDNA returns a structured JSON object containing the technical profile.
+
+```json
+{
+  "name": "Example",
+  "domain": "example.com",
+  "brandColors": ["#3b82f6", "#1e40af"],
+  "fonts": ["Inter", "Roboto"],
+  "techStack": [
+    { "name": "Next.js", "category": "Framework" },
+    { "name": "Tailwind CSS", "category": "Styling" }
+  ],
+  "infrastructure": {
+    "ip": "93.184.216.34",
+    "provider": "EdgeCast",
+    "location": "Norwell, United States"
+  }
+}
+```
+
+## Use cases
+
+*   **Competitive Intelligence.** Understand the stack and infrastructure used by other platforms.
+*   **Security Auditing.** Verify SSL health and header security for client projects.
+*   **Design Research.** Automatically harvest brand identity tokens for design inspiration.
+*   **Technical Discovery.** Quickly identify the origin and hosting of a mysterious domain.
+
 ## Authors
 
-[Xtra](https://github.com/xtrafr) - Owner & Lead Developer
-
-[b1s4](https://github.com/b1s4/) - Whois & DNS Propagation Developer
+*   **xtrafr.** [xtr4@tutamail.com](mailto:xtr4@tutamail.com) - Owner and Lead Developer.
+*   **b1s4.** Whois and DNS Propagation Developer.
 
 ## License
 
-MIT © [Xtra](https://github.com/xtrafr)
+MIT © [xtrafr](https://github.com/xtrafr)
 
 ---
 
-<div align="center">
-Made with DNA by <a href="https://github.com/xtrafr">Xtra</a> & <a href="https://github.com/b1s4/">b1s4</a>
-</div>
+Made with DNA by xtrafr and b1s4
