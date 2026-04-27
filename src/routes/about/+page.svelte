@@ -20,11 +20,11 @@
 			<div class="grid grid-cols-1 gap-12 md:grid-cols-2">
 				<!-- Xtra -->
 				<div
-					class="group flex flex-col border border-[var(--whois-border)] bg-[var(--whois-sidebar)] p-8 transition-all hover:border-[var(--whois-accent)]"
+					class="group flex flex-col border border-green-500/30 bg-[var(--whois-sidebar)] p-8 transition-all hover:border-green-500"
 				>
 					<div class="mb-8 flex items-center gap-6">
 						<div
-							class="h-16 w-16 overflow-hidden rounded-full border-2 border-[var(--whois-border)] bg-[var(--whois-surface)] transition-all group-hover:border-[var(--whois-accent)] md:h-20 md:w-20"
+							class="h-16 w-16 overflow-hidden rounded-full border-2 border-green-500 bg-[var(--whois-surface)] transition-all md:h-20 md:w-20"
 						>
 							<img src="/about/xtra.png" alt="Xtra" class="h-full w-full object-cover" />
 						</div>
@@ -32,7 +32,7 @@
 							<h2 class="text-2xl font-black uppercase tracking-widest text-[var(--whois-text)]">
 								Xtra
 							</h2>
-							<p class="text-xs font-bold uppercase tracking-widest text-[var(--whois-accent)]">
+							<p class="text-xs font-bold uppercase tracking-widest text-green-500">
 								Owner and main developer for WebDNA
 							</p>
 						</div>
@@ -46,7 +46,7 @@
 						<a
 							href="https://github.com/xtrafr"
 							target="_blank"
-							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-green-500"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -69,7 +69,7 @@
 						<a
 							href="https://xtra.wtf"
 							target="_blank"
-							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-green-500"
 						>
 							<Globe size={18} />
 							<span class="text-[10px] font-black uppercase tracking-widest">Portfolio</span>
@@ -79,11 +79,11 @@
 
 				<!-- b1s4 -->
 				<div
-					class="group flex flex-col border border-[var(--whois-border)] bg-[var(--whois-sidebar)] p-8 transition-all hover:border-[var(--whois-accent)]"
+					class="group flex flex-col border border-[#fee500]/30 bg-[var(--whois-sidebar)] p-8 transition-all hover:border-[#fee500]"
 				>
 					<div class="mb-8 flex items-center gap-6">
 						<div
-							class="h-16 w-16 overflow-hidden rounded-full border-2 border-[var(--whois-border)] bg-[var(--whois-surface)] transition-all group-hover:border-[var(--whois-accent)] md:h-20 md:w-20"
+							class="h-16 w-16 overflow-hidden rounded-full border-2 border-[#fee500] bg-[var(--whois-surface)] transition-all md:h-20 md:w-20"
 						>
 							<img src="/about/bisa.png" alt="b1s4" class="h-full w-full object-cover" />
 						</div>
@@ -91,7 +91,7 @@
 							<h2 class="text-2xl font-black uppercase tracking-widest text-[var(--whois-text)]">
 								b1s4
 							</h2>
-							<p class="text-xs font-bold uppercase tracking-widest text-[var(--whois-accent)]">
+							<p class="text-xs font-bold uppercase tracking-widest text-[#fee500]">
 								Whois and DNS propagation scanner developer
 							</p>
 						</div>
@@ -105,7 +105,7 @@
 						<a
 							href="https://github.com/b1s4/"
 							target="_blank"
-							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-[#fee500]"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
@@ -128,7 +128,7 @@
 						<a
 							href="https://bio.b1s4.xyz"
 							target="_blank"
-							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-[var(--whois-accent)]"
+							class="flex items-center gap-2 text-[var(--whois-text-muted)] transition-colors hover:text-[#fee500]"
 						>
 							<Globe size={18} />
 							<span class="text-[10px] font-black uppercase tracking-widest">Website</span>
