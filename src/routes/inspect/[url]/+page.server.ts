@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { scanUrl, getNetworkOnlyReport } from '$lib/server/scanner';
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = ({ params }) => {
   const url = decodeURIComponent(params.url);
 
   // Basic URL validation to prevent 500 errors on typos like "fmhy..net"

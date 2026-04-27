@@ -14,16 +14,13 @@
     if (!url || isLoading) return;
     
     isLoading = true;
-    // Simulate initial check
-    setTimeout(async () => {
-      try {
-        await goto(`/inspect/${encodeURIComponent(url)}`);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        isLoading = false;
-      }
-    }, 800);
+    try {
+      await goto(`/inspect/${encodeURIComponent(url)}`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      isLoading = false;
+    }
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
