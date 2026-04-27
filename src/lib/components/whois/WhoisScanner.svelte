@@ -258,11 +258,11 @@
 					</div>
 				</div>
 
-				<div class="relative bg-[var(--whois-bg)] overflow-hidden aspect-[16/8] min-h-[480px] group/map">
+				<div class="relative bg-[var(--whois-bg)] overflow-hidden aspect-video md:aspect-[16/8] w-full group/map">
 					<!-- Technical Overlay -->
 					<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, var(--whois-accent) 1px, transparent 0); background-size: 24px 24px;"></div>
 					
-					<svg class="w-full h-full relative z-10 transition-opacity duration-500 {propLoading ? 'opacity-30 grayscale' : 'opacity-100 grayscale-0'}" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet">
+					<svg class="block mx-auto w-full h-auto relative z-10 transition-opacity duration-500 {propLoading ? 'opacity-30 grayscale' : 'opacity-100 grayscale-0'}" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet">
 						<path class="fill-[var(--whois-surface-2)]" d={spherePath} />
 						<path class="fill-[var(--whois-surface)] stroke-[var(--whois-border)] stroke-[0.5]" d={landPath} />
 						
@@ -287,7 +287,7 @@
 									<circle
 										cx={pos[0]}
 										cy={pos[1]}
-										r={hoveredId === r.id || selectedNode?.id === r.id ? 3.5 : 2}
+										r={hoveredId === r.id || selectedNode?.id === r.id ? 6 : 3.5}
 										fill={propColor(r)}
 										class="transition-all duration-300 pointer-events-none {selectedNode?.id === r.id ? 'stroke-white stroke-[1.5px]' : ''}"
 									/>
@@ -300,13 +300,13 @@
 
 					{#if selectedNode}
 						<div 
-							class="absolute top-4 right-4 z-50 w-72 border-2 border-[var(--whois-accent)] bg-[var(--whois-surface)]/95 p-5 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-md pointer-events-auto"
+							class="absolute top-2 right-2 sm:top-4 sm:right-4 z-50 w-[calc(100%-1rem)] sm:w-72 max-h-[calc(100%-1rem)] overflow-y-auto border-2 border-[var(--whois-accent)] bg-[var(--whois-surface)]/95 p-3 sm:p-5 shadow-[0_0_40px_rgba(0,0,0,0.5)] backdrop-blur-md pointer-events-auto custom-scrollbar"
 							transition:fly={{ x: 30, duration: 300 }}
 						>
-							<div class="mb-4 flex items-center justify-between">
+							<div class="mb-3 sm:mb-4 flex items-center justify-between">
 								<div class="flex items-center gap-2">
 									<div class="w-1.5 h-1.5 rounded-full" style="background-color: {propColor(selectedNode)}"></div>
-									<span class="text-[10px] font-black tracking-widest text-[var(--whois-text)] uppercase">{selectedNode.city}</span>
+									<span class="text-[9px] sm:text-[10px] font-black tracking-widest text-[var(--whois-text)] uppercase">{selectedNode.city}</span>
 								</div>
 								<button 
 									onclick={() => selectedNode = null}
@@ -316,36 +316,36 @@
 								</button>
 							</div>
 
-							<div class="space-y-3">
-								<div class="flex justify-between items-center border-b border-[var(--whois-border)]/50 pb-2">
-									<span class="text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">Status</span>
-									<span class="text-xs font-black uppercase {selectedNode.status === 'ok' ? 'text-emerald-400' : 'text-amber-400'}">
+							<div class="space-y-2 sm:space-y-3">
+								<div class="flex justify-between items-center border-b border-[var(--whois-border)]/50 pb-1.5 sm:pb-2">
+									<span class="text-[9px] sm:text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">Status</span>
+									<span class="text-[10px] sm:text-xs font-black uppercase {selectedNode.status === 'ok' ? 'text-emerald-400' : 'text-amber-400'}">
 										{selectedNode.status === 'ok' ? 'Online' : selectedNode.status.toUpperCase()}
 									</span>
 								</div>
-								<div class="flex justify-between items-center border-b border-[var(--whois-border)]/50 pb-2">
-									<span class="text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">Latency</span>
-									<span class="text-xs font-mono text-[var(--whois-text)] font-bold">{selectedNode.ms}ms</span>
+								<div class="flex justify-between items-center border-b border-[var(--whois-border)]/50 pb-1.5 sm:pb-2">
+									<span class="text-[9px] sm:text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">Latency</span>
+									<span class="text-[10px] sm:text-xs font-mono text-[var(--whois-text)] font-bold">{selectedNode.ms}ms</span>
 								</div>
-								<div class="flex justify-between items-center border-b border-[var(--whois-border)]/50 pb-2">
-									<span class="text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">IP Address</span>
-									<span class="text-xs font-mono text-[var(--whois-accent)]/70">{selectedNode.ip || '0.0.0.0'}</span>
+								<div class="flex justify-between items-center border-b border-[var(--whois-border)]/50 pb-1.5 sm:pb-2">
+									<span class="text-[9px] sm:text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">IP Address</span>
+									<span class="text-[10px] sm:text-xs font-mono text-[var(--whois-accent)]/70">{selectedNode.ip || '0.0.0.0'}</span>
 								</div>
 								<div class="flex justify-between items-center">
-									<span class="text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">Region</span>
-									<span class="text-xs font-bold text-[var(--whois-text)] uppercase tracking-widest">{selectedNode.region || 'Unknown'}</span>
+									<span class="text-[9px] sm:text-[10px] font-bold text-[var(--whois-text-muted)] uppercase tracking-widest">Region</span>
+									<span class="text-[10px] sm:text-xs font-bold text-[var(--whois-text)] uppercase tracking-widest">{selectedNode.region || 'Unknown'}</span>
 								</div>
 							</div>
 
 							{#if selectedNode.records.length > 0}
-								<div class="mt-4 pt-4 border-t border-[var(--whois-border)]">
-									<div class="flex items-center justify-between mb-3">
-										<span class="text-[9px] font-black uppercase tracking-widest text-[var(--whois-accent)]">Records</span>
-										<span class="text-[8px] font-bold text-[var(--whois-text-muted)] uppercase">{selectedNode.records.length} Found</span>
+								<div class="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-[var(--whois-border)]">
+									<div class="flex items-center justify-between mb-2 sm:mb-3">
+										<span class="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[var(--whois-accent)]">Records</span>
+										<span class="text-[7px] sm:text-[8px] font-bold text-[var(--whois-text-muted)] uppercase">{selectedNode.records.length} Found</span>
 									</div>
-									<div class="custom-scrollbar max-h-[160px] overflow-y-auto space-y-1.5 pr-1">
+									<div class="custom-scrollbar max-h-[120px] sm:max-h-[160px] overflow-y-auto space-y-1 pr-1">
 										{#each selectedNode.records as rec}
-											<div class="text-[9px] font-mono text-[var(--whois-text)] bg-[var(--whois-surface-2)] px-2 py-1.5 border border-[var(--whois-border)] break-all leading-tight">
+											<div class="text-[8px] sm:text-[9px] font-mono text-[var(--whois-text)] bg-[var(--whois-surface-2)] px-2 py-1 border border-[var(--whois-border)] break-all leading-tight">
 												{rec}
 											</div>
 										{/each}
@@ -372,7 +372,7 @@
 
 					{#if mapTooltip}
 						<div 
-							class="fixed pointer-events-none z-[1000] bg-[var(--whois-bg)] border border-[var(--whois-border)] p-4 shadow-2xl min-w-[240px] backdrop-blur-xl border-l-4" 
+							class="fixed pointer-events-none z-[1000] hidden sm:block bg-[var(--whois-bg)] border border-[var(--whois-border)] p-4 shadow-2xl min-w-[240px] backdrop-blur-xl border-l-4" 
 							style="left:{mapTooltip.x}px;top:{mapTooltip.y}px;transform:translate(15px, -50%); border-left-color: {propColor(mapTooltip.r)}"
 						>
 							<div class="flex items-center gap-3 mb-3 pb-2 border-b border-[var(--whois-border)]">
@@ -416,16 +416,21 @@
 				</div>
 
 				<!-- Single-Line Resolver Ticker -->
-				<div class="flex items-center gap-6 px-6 py-3 bg-[var(--whois-bg)] overflow-x-auto no-scrollbar border-t border-[var(--whois-border)]">
-					{#each propResults as r}
-						<button 
-							class="flex items-center gap-2 shrink-0 group cursor-pointer"
-							onclick={() => selectedNode = selectedNode?.id === r.id ? null : r}
-						>
-							<div class="w-1 h-1 rounded-full opacity-40 group-hover:opacity-100 transition-opacity" style="background-color: {propColor(r)}"></div>
-							<span class="text-[10px] font-black text-[var(--whois-text-muted)] uppercase tracking-widest group-hover:text-[var(--whois-accent)] transition-colors whitespace-nowrap {selectedNode?.id === r.id ? 'text-[var(--whois-accent)]' : ''}">{r.city}</span>
-						</button>
-					{/each}
+				<div class="relative border-t border-[var(--whois-border)] bg-[var(--whois-bg)]">
+					<div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[var(--whois-bg)] to-transparent z-10 pointer-events-none"></div>
+					<div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--whois-bg)] to-transparent z-10 pointer-events-none"></div>
+					
+					<div class="flex items-center gap-6 px-8 py-4 overflow-x-auto no-scrollbar">
+						{#each propResults as r}
+							<button 
+								class="flex items-center gap-2 shrink-0 group cursor-pointer"
+								onclick={() => selectedNode = selectedNode?.id === r.id ? null : r}
+							>
+								<div class="w-1 h-1 rounded-full opacity-40 group-hover:opacity-100 transition-opacity" style="background-color: {propColor(r)}"></div>
+								<span class="text-[10px] font-black text-[var(--whois-text-muted)] uppercase tracking-widest group-hover:text-[var(--whois-accent)] transition-colors whitespace-nowrap {selectedNode?.id === r.id ? 'text-[var(--whois-accent)]' : ''}">{r.city}</span>
+							</button>
+						{/each}
+					</div>
 				</div>
 			</section>
 

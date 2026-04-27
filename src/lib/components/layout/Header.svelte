@@ -4,7 +4,8 @@
   import { Separator } from "$lib/components/ui/separator";
   import { 
     Send as SendIcon, Plus as PlusIcon, Menu as MenuIcon, X as XIcon,
-    Search, Star, History, History as RecentIcon, Layers as LayersIcon
+    Search, Star, History, History as RecentIcon, Layers as LayersIcon,
+    Users
   } from "@lucide/svelte";
   import GithubIcon from "$lib/components/logos/Github.svelte";
   import { history } from "$lib/stores/appState";
@@ -17,6 +18,7 @@
     { name: "Inspect", icon: Search, href: "/" },
     { name: "Favorites", icon: Star, href: "/favorites" },
     { name: "History", icon: History, href: "/history" },
+    { name: "About", icon: Users, href: "/about" },
   ];
 </script>
 
@@ -78,7 +80,7 @@
       transition:fade={{ duration: 150 }}
     >
       <div 
-        class="flex flex-col bg-[var(--whois-sidebar)] border-b border-[var(--whois-border)] px-4 py-8"
+        class="flex flex-col bg-[var(--whois-sidebar)] border-b border-[var(--whois-border)] px-4 py-6 max-h-[calc(100vh-3.5rem)] overflow-y-auto no-scrollbar"
         onclick={(e) => e.stopPropagation()}
         transition:slide
       >
