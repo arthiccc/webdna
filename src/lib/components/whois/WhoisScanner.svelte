@@ -38,6 +38,7 @@
 	let dnsLoading  = $state(false);
 	let rdapLoading = $state(false);
 	let dnsError    = $state('');
+	let propError    = $state('');
 	let rdapError   = $state('');
 
 	const ALL_PROP_TYPES = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SRV', 'SOA', 'TXT', 'CAA', 'DS', 'DNSKEY'] as const;
@@ -151,7 +152,7 @@
 			const res  = await fetch(`/api/propagation?domain=${encodeURIComponent(domain)}&type=${encodeURIComponent(type)}`);
 			const data = await res.json();
 			if (!data.error) propResults = data.results;
-		} catch {}
+		} catch { propError = "Propagation query failed"; }
 		finally { propLoading = false; }
 	}
 
