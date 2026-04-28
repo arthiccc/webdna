@@ -1651,10 +1651,15 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 		onclick={() => (isMapOpen = false)}
+		onkeydown={(e) => e.key === 'Escape' && (isMapOpen = false)}
+		role="button"
+		tabindex="0"
 	>
 		<div
 			class="w-full max-w-2xl border border-[var(--whois-border)] bg-[var(--whois-bg)] shadow-2xl"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+			role="none"
 			transition:fly={{ y: 10, duration: 150 }}
 		>
 			<div
@@ -1727,10 +1732,15 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 		onclick={() => (selectedAsset = null)}
+		onkeydown={(e) => e.key === 'Escape' && (selectedAsset = null)}
+		role="button"
+		tabindex="0"
 	>
 		<div
 			class="w-full max-w-4xl border border-[var(--whois-border)] bg-[var(--whois-bg)] shadow-2xl"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+			role="none"
 			transition:fly={{ y: 10, duration: 150 }}
 		>
 			<div
@@ -1833,10 +1843,15 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 		class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 		onclick={() => (isProviderModalOpen = false)}
+		onkeydown={(e) => e.key === 'Escape' && (isProviderModalOpen = false)}
+		role="button"
+		tabindex="0"
 	>
 		<div
 			class="w-full max-w-2xl border border-[var(--whois-border)] bg-[var(--whois-bg)] shadow-2xl"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
+			role="none"
 			transition:fly={{ y: 10, duration: 150 }}
 		>
 			<div

@@ -271,10 +271,13 @@
 							{#if pos}
 								<g
 									class="cursor-pointer"
+									role="button"
+									tabindex="0"
 									onmouseenter={(e) => { hoveredId = r.id; mapTooltip = { r, x: e.clientX, y: e.clientY }; }}
 									onmousemove={(e) => { mapTooltip = { r, x: e.clientX, y: e.clientY }; }}
 									onmouseleave={() => { hoveredId = null; mapTooltip = null; }}
 									onclick={() => selectedNode = selectedNode?.id === r.id ? null : r}
+									onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectedNode = selectedNode?.id === r.id ? null : r; } }}
 								>
 									<!-- Hit Area (Transparent) -->
 									<circle

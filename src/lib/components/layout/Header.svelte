@@ -77,11 +77,16 @@
     <div 
       class="fixed inset-0 top-14 z-50 bg-black/80 backdrop-blur-sm md:hidden"
       onclick={() => isMenuOpen = false}
+      onkeydown={(e) => e.key === 'Escape' && (isMenuOpen = false)}
+      role="button"
+      tabindex="0"
       transition:fade={{ duration: 150 }}
     >
       <div 
         class="flex flex-col bg-[var(--whois-sidebar)] border-b border-[var(--whois-border)] px-4 py-6 max-h-[calc(100vh-3.5rem)] overflow-y-auto no-scrollbar"
         onclick={(e) => e.stopPropagation()}
+        onkeydown={(e) => e.stopPropagation()}
+        role="none"
         transition:slide
       >
         <div class="flex flex-col space-y-2 mb-8">
