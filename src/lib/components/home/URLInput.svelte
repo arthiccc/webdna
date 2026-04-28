@@ -43,7 +43,7 @@
   class={cn("relative w-full px-4 md:px-0", className)}
 >
   <div class="relative flex items-center">
-    <div class="pointer-events-none absolute left-3 text-[var(--whois-text-muted)]">
+    <div class="pointer-events-none absolute left-3 text-neutral-400 dark:text-neutral-500">
       {#if isLoading}
         <Loader2Icon size={20} class="animate-spin" />
       {:else}
@@ -57,22 +57,23 @@
       bind:value={url}
       placeholder="Paste a website URL..."
       class={cn(
-        "h-11 w-full rounded-md border border-[var(--whois-border)] bg-[var(--whois-surface)] pl-10 pr-24 text-base text-[var(--whois-text)] shadow-sm outline-none transition-all",
-        "focus:border-[var(--whois-accent)] focus:ring-0"
+        "h-11 w-full rounded-md border border-neutral-200 bg-white pl-10 pr-24 text-base shadow-sm outline-none transition-all",
+        "focus:border-neutral-400 focus:ring-0",
+        "dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:shadow-none dark:focus:border-neutral-600"
       )}
     />
     
     {#if !url && !isLoading}
-      <div class="absolute right-3 flex items-center space-x-1 text-xs text-[var(--whois-text-muted)]">
-        <span class="rounded border border-[var(--whois-border)] px-1">⌘</span>
-        <span class="rounded border border-[var(--whois-border)] px-1">K</span>
+      <div class="absolute right-3 flex items-center space-x-1 text-xs text-neutral-400">
+        <span class="rounded border border-neutral-200 px-1 dark:border-neutral-800">⌘</span>
+        <span class="rounded border border-neutral-200 px-1 dark:border-neutral-800">K</span>
       </div>
     {/if}
 
     {#if url && !isLoading}
       <button
         type="submit"
-        class="absolute right-1.5 h-8 rounded-md bg-[var(--whois-accent)] px-3 text-xs font-medium text-[var(--whois-accent-text)] transition-all hover:brightness-110"
+        class="absolute right-1.5 h-8 rounded-md bg-neutral-900 px-3 text-xs font-medium text-white transition-all hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200"
       >
         Inspect
       </button>
