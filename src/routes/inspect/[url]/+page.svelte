@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import { fade, fly } from 'svelte/transition';
-	import { history, favorites, addToHistory, toggleFavorite } from '$lib/stores/appState';
-	import { page } from '$app/state';
+	import { favorites, addToHistory, toggleFavorite } from '$lib/stores/appState';
 	import type { PageData } from './$types';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
@@ -47,6 +46,7 @@
 	import { analyzeHtml } from '$lib/scanner/analysis';
 	import { findProvider } from '$lib/data/providers';
 
+	import { mode } from 'mode-watcher';
 	let { data } = $props<{ data: PageData }>();
 	let showFullDesc = $state(false);
 	let isMapOpen = $state(false);
@@ -55,114 +55,10 @@
 	let clientError = $state<string | null>(null);
 	let isScanningClient = $state(false);
 	let serverReportResolved = $state<any>(null);
+	let serverNetworkData = $state<any>(null);
 
-	// Asset Viewer state
-	let selectedAsset = $state<any>(null);
-	let assetContent = $state<string>('');
-	let isAssetLoading = $state(false);
-	let assetError = $state(false);
-
-	function formatAndHighlight(code: string, type: string) {
-		if (!code) return '';
-
-		// Simple prettifier for minified code
-		let formatted = code;
-		if (type === 'script' || type === 'style') {
-			formatted = code
-				.replace(/([{};])/g, '$1\n')
-				.replace(/\n\s*\n/g, '\n')
-				.split('\n')
-				.map((line) => line.trim())
-				.filter((line) => line.length > 0)
-				.join('\n');
-
-			// Basic indentation
-			let indent = 0;
-			formatted = formatted
-				.split('\n')
-				.map((line) => {
-					if (line.includes('}')) indent--;
-					const spaced = '  '.repeat(Math.max(0, indent)) + line;
-					if (line.includes('{')) indent++;
-					return spaced;
-				})
-				.join('\n');
-		}
-
-		// Basic Syntax Highlighting (Regex based)
-		// Escaping HTML
-		let html = formatted.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-		if (type === 'script') {
-			html = html
-				.replace(
-					/\b(const|let|var|function|return|if|else|for|while|import|export|from|async|await|const|new|try|catch|finally|class|extends|await)\b/g,
-					'<span class="text-purple-500 font-bold">$1</span>'
-				)
-				.replace(
-					/\b(true|false|null|undefined)\b/g,
-					'<span class="text-orange-500 font-bold">$1</span>'
-				)
-				.replace(/(".*?"|'.*?'|`.*?`)/g, '<span class="text-green-500">$1</span>')
-				.replace(/\/\/.*/g, '<span class="text-neutral-500">$1</span>')
-				.replace(/\b(\d+)\b/g, '<span class="text-blue-500">$1</span>');
-		} else if (type === 'style') {
-			html = html
-				.replace(/([a-zA-Z-]+)(?=\s*:)/g, '<span class="text-blue-400 font-bold">$1</span>')
-				.replace(/:([^;]+);/g, ': <span class="text-orange-400">$1</span>;')
-				.replace(
-					/(\.[a-zA-Z0-9_-]+|#[a-zA-Z0-9_-]+|[a-z]+)(?=\s*\{)/g,
-					'<span class="text-yellow-500 font-bold">$1</span>'
-				);
-		}
-
-		return html;
-	}
-
-	async function openAsset(asset: any) {
-		if (asset.type === 'folder') return;
-
-		selectedAsset = asset;
-		assetContent = '';
-		assetError = false;
-
-		if (
-			asset.fileType === 'script' ||
-			asset.fileType === 'style' ||
-			asset.fileType === 'document'
-		) {
-			isAssetLoading = true;
-			try {
-				const res = await fetch(`/api/proxy-asset?url=${encodeURIComponent(asset.url)}`);
-				if (res.ok) {
-					const raw = await res.text();
-					assetContent = formatAndHighlight(raw, asset.fileType);
-				} else {
-					assetContent = '<span class="text-red-500">// Failed to load asset content.</span>';
-				}
-			} catch (err) {
-				assetContent = '<span class="text-red-500">// Error fetching asset.</span>';
-			} finally {
-				isAssetLoading = false;
-			}
-		}
-	}
-
-	// Scroll lock effect
-	$effect(() => {
-		if (isMapOpen || selectedAsset || showFullDesc || isProviderModalOpen) {
-			document.body.style.overflow = 'hidden';
-		} else {
-			document.body.style.overflow = '';
-		}
-		return () => {
-			document.body.style.overflow = '';
-		};
-	});
-
-	// Derive final report and error
 	let report = $derived(clientReport || serverReportResolved);
-	let error = $derived(clientError || data.error);
+	let error = $derived(clientError || null);
 
 	let isFavorite = $derived($favorites.some((f) => f.domain === report?.domain));
 
@@ -173,6 +69,7 @@
 			serverReportResolved = reportValue;
 			if (reportValue) {
 				if (reportValue.needsClientFetch && !clientReport) {
+					serverNetworkData = reportValue.networkData || null;
 					performClientScan();
 				} else if (!reportValue.needsClientFetch) {
 					addToHistory(reportValue);
@@ -244,8 +141,8 @@
 			const analysis = analyzeHtml(html, targetUrl, domain);
 
 			// 4. Merge with server-provided network data
-			clientReport = {
-				...data.networkData,
+		clientReport = {
+			...serverNetworkData,
 				...analysis,
 				domain,
 				favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=128`,
@@ -1688,7 +1585,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 						src="https://www.openstreetmap.org/export/embed.html?bbox={report.longitude -
 							0.1},{report.latitude - 0.1},{report.longitude + 0.1},{report.latitude +
 							0.1}&layer=mapnik&marker={report.latitude},{report.longitude}"
-						class="opacity-100 brightness-[1.1] contrast-[0.9] hue-rotate-180 invert-[0.9]"
+						class={$mode === 'dark' ? 'opacity-100 brightness-[1.1] contrast-[0.9] hue-rotate-180 invert-[0.9]' : ''}
 					></iframe>
 				{:else}
 					<div class="absolute inset-0 flex flex-col items-center justify-center gap-2">

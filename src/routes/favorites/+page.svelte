@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { favorites } from '$lib/stores/appState';
-  import { Badge } from '$lib/components/ui/badge';
-  import { Button } from '$lib/components/ui/button';
-  import { Globe as GlobeIcon, Star as StarIcon } from "@lucide/svelte";
+	import { favorites } from '$lib/stores/appState';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Button } from '$lib/components/ui/button';
+	import { Globe as GlobeIcon, Star as StarIcon, Search as SearchIcon } from "@lucide/svelte";
 
-  let searchQuery = $state("");
+	let searchQuery = $state("");
 
-  const filteredFavorites = $derived(
-    $favorites.filter(r => {
-      return r.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-             r.domain.toLowerCase().includes(searchQuery.toLowerCase());
-    })
-  );
+	const filteredFavorites = $derived(
+		$favorites.filter(r => {
+			return r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+				r.domain.toLowerCase().includes(searchQuery.toLowerCase());
+		})
+	);
 </script>
 
 <div class="mt-2 flex flex-col space-y-2 px-2">
@@ -35,10 +35,23 @@
 
         <!-- Content -->
         <div class="p-6">
-          <div class="mb-12">
-            <h1 class="text-4xl font-bold tracking-tight dark:text-white">Favorites</h1>
-            <p class="mt-2 text-neutral-500 dark:text-neutral-400">Your curated collection of web inspiration.</p>
-          </div>
+	<div class="mb-12">
+		<h1 class="text-4xl font-bold tracking-tight dark:text-white">Favorites</h1>
+		<p class="mt-2 text-neutral-500 dark:text-neutral-400">Your curated collection of web inspiration.</p>
+		{#if $favorites.length > 0}
+		<div class="relative mt-4 max-w-md">
+			<div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-neutral-500">
+				<SearchIcon size={16} strokeWidth={2} />
+			</div>
+			<input
+				type="text"
+				bind:value={searchQuery}
+				placeholder="Search favorites..."
+				class="h-9 w-full rounded-md border border-neutral-200 bg-white pl-9 pr-3 text-sm outline-none transition-all focus:border-neutral-400 focus:ring-0 dark:border-neutral-800 dark:bg-neutral-900 dark:text-white dark:focus:border-neutral-600"
+			/>
+		</div>
+		{/if}
+	</div>
 
           {#if $favorites.length === 0}
             <div class="flex flex-col items-center justify-center py-24 text-center">

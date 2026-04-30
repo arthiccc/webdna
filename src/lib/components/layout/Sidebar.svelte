@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import { page } from '$app/state';
-	import { Separator } from '$lib/components/ui/separator';
 	import {
 		Search,
 		Globe,
