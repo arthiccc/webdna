@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
+	import { fade, slide, fly } from 'svelte/transition';
 	import { Map as MapIcon, Loader2, X as XIcon } from '@lucide/svelte';
 
-	import { DNS_GROUPS, ALL_DNS_TYPES, formatTTL } from '$lib/dns-types';
+	import { DNS_GROUPS, DNS_TYPE_INFO, ALL_DNS_TYPES, formatTTL } from '$lib/dns-types';
 	import type { DnsTypeResult } from '$lib/dns-types';
 
 	let { domain } = $props();

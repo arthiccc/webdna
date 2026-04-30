@@ -91,14 +91,13 @@ export function analyzeHtml(html: string, finalUrl: string, domain: string): Par
   }
 
   // Social Links
-	const socialLinks: SocialLink[] = [];
-	for (const sp of socialPatterns) {
-		const regex = new RegExp(`href=["']([^"']*${sp.pattern.source}[^"']*)["']`, 'i');
-		const match = html.match(regex);
-		if (match && match[1] && !socialLinks.find(l => l.platform === sp.platform)) {
-			socialLinks.push({ platform: sp.platform, url: match[1] });
-		}
-	}
+  const socialLinks: SocialLink[] = [];
+  for (const sp of socialPatterns) {
+    const match = html.match(new RegExp(`href=["']([^"']?${sp.pattern.source}[^"']?)["']`, 'i'));
+    if (match && !socialLinks.find(l => l.platform === sp.platform)) {
+      socialLinks.push({ platform: sp.platform, url: match[1] });
+    }
+  }
 
   // Colors
   const brandColors: string[] = [];

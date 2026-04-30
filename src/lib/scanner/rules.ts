@@ -112,13 +112,8 @@ export const techRules: TechRule[] = [
 ];
 
 export const socialPatterns = [
-	{ platform: 'Twitter/X', pattern: /(?:twitter\.com|x\.com)\/([\w]+)/ },
-	{ platform: 'GitHub', pattern: /github\.com\/([\w]+)/ },
-	{ platform: 'LinkedIn', pattern: /linkedin\.com\/(?:company|in)\/([\w-]+)/ },
-	{ platform: 'Instagram', pattern: /instagram\.com\/([\w]+)/ },
-	{ platform: 'Facebook', pattern: /facebook\.com\/([\w.]+)/ },
-	{ platform: 'YouTube', pattern: /youtube\.com\/(?:c\/|channel\/|@)?([\w-]+)/ },
-	{ platform: 'TikTok', pattern: /tiktok\.com\/@([\w.]+)/ },
-	{ platform: 'Discord', pattern: /discord\.gg\/([\w-]+)/ },
-	{ platform: 'Mastodon', pattern: /mastodon\.social\/@([\w]+)/ }
+  { platform: 'Twitter', pattern: /twitter\.com\/([\w]+)/ },
+  { platform: 'GitHub', pattern: /github\.com\/([\w]+)/ },
+  { platform: 'LinkedIn', pattern: /linkedin\.com\/company\/([\w-]+)/ },
+  { platform: 'Instagram', pattern: /instagram\.com\/([\w]+)/ }
 ];
