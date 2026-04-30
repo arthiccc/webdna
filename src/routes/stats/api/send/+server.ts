@@ -1,8 +1,10 @@
 import type { RequestHandler } from './$types';
 
+const UMAMI_URL = process.env.UMAMI_URL || 'https://umami.tail824e95.ts.net';
+
 export const POST: RequestHandler = async ({ request, fetch }) => {
 	const body = await request.json();
-	const res = await fetch('https://umami.tail824e95.ts.net/api/send', {
+	const res = await fetch(`${UMAMI_URL}/api/send`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',

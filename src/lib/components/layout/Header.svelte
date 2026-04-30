@@ -1,8 +1,7 @@
 <script lang="ts">
-  import { cn } from "$lib/utils";
-  import { Button } from "$lib/components/ui/button";
-  import { Separator } from "$lib/components/ui/separator";
-  import { 
+	import { cn } from "$lib/utils";
+	import { Button } from "$lib/components/ui/button";
+	import {
     Send as SendIcon, Plus as PlusIcon, Menu as MenuIcon, X as XIcon,
     Search, Star, History, History as RecentIcon, Layers as LayersIcon,
     Users

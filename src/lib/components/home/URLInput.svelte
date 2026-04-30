@@ -1,7 +1,7 @@
 <script lang="ts">
   import { cn } from "$lib/utils";
   import { onMount } from "svelte";
-  import { Search as SearchIcon, ArrowRight as ArrowRightIcon, Loader2 as Loader2Icon } from "@lucide/svelte";
+	import { Search as SearchIcon, Loader2 as Loader2Icon } from "@lucide/svelte";
   import { goto } from "$app/navigation";
 
   let { class: className } = $props<{ class?: string }>();
