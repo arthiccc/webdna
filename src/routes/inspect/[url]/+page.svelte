@@ -41,7 +41,9 @@
 		Dna,
 		Loader2,
 		Search as SearchIcon,
-		X as CloseIcon
+		X as CloseIcon,
+		Hash,
+		Paintbrush
 	} from '@lucide/svelte';
 	import WhoisScanner from '$lib/components/whois/WhoisScanner.svelte';
 	import { analyzeHtml } from '$lib/scanner/analysis';
@@ -61,6 +63,7 @@
 	let assetContent = $state<string>('');
 	let isAssetLoading = $state(false);
 	let assetError = $state(false);
+	let isExportOpen = $state(false);
 
 	function formatAndHighlight(code: string, type: string) {
 		if (!code) return '';
@@ -394,6 +397,20 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 		toast.success('Colors exported to .css');
 	};
 
+	const downloadJSON = () => {
+		const targetReport = clientReport || serverReportResolved;
+		if (!targetReport) return;
+		const data = JSON.stringify(targetReport, null, 2);
+		const blob = new Blob([data], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${targetReport.domain}-analysis.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+		toast.success('Analysis exported to .json');
+	};
+
 	let expandedFolders = $state(new Set<string>());
 	const toggleFolder = (path: string) => {
 		if (expandedFolders.has(path)) {
@@ -426,6 +443,8 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 		<title>Inspecting...</title>
 	{/if}
 </svelte:head>
+
+<svelte:window onclick={() => (isExportOpen = false)} />
 
 {#snippet assetItem(node: any, path: string = '')}
 	{@const currentPath = path ? `${path}/${node.name}` : node.name}
@@ -654,14 +673,87 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 											<StarIcon size={14} fill={isFavorite ? 'currentColor' : 'none'} />
 											<span>{isFavorite ? 'Saved' : 'Save'}</span>
 										</button>
-										<button
-											onclick={() =>
-												copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON')}
-											class="flex h-9 items-center gap-2 border border-[var(--whois-border)] px-4 text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-all hover:border-[var(--whois-accent)] hover:text-[var(--whois-text)]"
-										>
-											<DownloadIcon size={14} />
-											<span>JSON</span>
-										</button>
+										<div class="relative">
+											<button
+												onclick={(e) => {
+													e.stopPropagation();
+													isExportOpen = !isExportOpen;
+												}}
+												class={cn(
+													'flex h-9 items-center gap-2 border px-4 text-[10px] font-bold tracking-widest uppercase transition-all',
+													isExportOpen
+														? 'border-[var(--whois-accent)] bg-[var(--whois-surface-2)] text-[var(--whois-text)]'
+														: 'border-[var(--whois-border)] bg-transparent text-[var(--whois-text-muted)] hover:border-[var(--whois-accent)] hover:text-[var(--whois-text)]'
+												)}
+											>
+												<DownloadIcon size={14} />
+												<span>Export</span>
+												<ChevronDown
+													size={10}
+													class={cn('transition-transform duration-200', isExportOpen && 'rotate-180')}
+												/>
+											</button>
+
+											{#if isExportOpen}
+												<div
+													class="absolute right-0 top-full z-50 mt-2 w-48 border border-[var(--whois-border)] bg-[var(--whois-surface)] p-1 shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+													transition:fly={{ y: 5, duration: 200 }}
+													onclick={(e) => e.stopPropagation()}
+												>
+													<button
+														onclick={() => {
+															downloadJSON();
+															isExportOpen = false;
+														}}
+														class="flex w-full items-center gap-3 px-3 py-2 text-left text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:bg-[var(--whois-surface-2)] hover:text-[var(--whois-accent)]"
+													>
+														<DownloadIcon size={12} />
+														<span>Download JSON</span>
+													</button>
+													<button
+														onclick={() => {
+															copyToClipboard(JSON.stringify(activeReport, null, 2), 'Report JSON');
+															isExportOpen = false;
+														}}
+														class="flex w-full items-center gap-3 px-3 py-2 text-left text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:bg-[var(--whois-surface-2)] hover:text-[var(--whois-accent)]"
+													>
+														<CopyIcon size={12} />
+														<span>Copy JSON</span>
+													</button>
+													<div class="my-1 h-px bg-[var(--whois-border)]"></div>
+													<button
+														onclick={() => {
+															downloadColors();
+															isExportOpen = false;
+														}}
+														class="flex w-full items-center gap-3 px-3 py-2 text-left text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:bg-[var(--whois-surface-2)] hover:text-[var(--whois-accent)]"
+													>
+														<Paintbrush size={12} />
+														<span>Export CSS</span>
+													</button>
+													<button
+														onclick={() => {
+															downloadDNS();
+															isExportOpen = false;
+														}}
+														class="flex w-full items-center gap-3 px-3 py-2 text-left text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:bg-[var(--whois-surface-2)] hover:text-[var(--whois-accent)]"
+													>
+														<Fingerprint size={12} />
+														<span>Export DNS</span>
+													</button>
+													<button
+														onclick={() => {
+															copyToClipboard(generateComponent(), 'React Component');
+															isExportOpen = false;
+														}}
+														class="flex w-full items-center gap-3 px-3 py-2 text-left text-[10px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:bg-[var(--whois-surface-2)] hover:text-[var(--whois-accent)]"
+													>
+														<CodeIcon size={12} />
+														<span>Copy Snippet</span>
+													</button>
+												</div>
+											{/if}
+										</div>
 										<button
 											onclick={() => copyToClipboard(window.location.href, 'Report URL')}
 											class="flex h-9 flex-1 items-center gap-2 bg-[var(--whois-accent-blue)] px-6 text-[10px] font-black tracking-widest text-white uppercase transition-all hover:brightness-110 active:scale-95 md:flex-none"
@@ -953,7 +1045,7 @@ export default ${report.name.replace(/\s+/g, '')}BrandCard;
 													class="flex items-center gap-1.5 text-[9px] font-bold tracking-widest text-[var(--whois-text-muted)] uppercase transition-colors hover:text-[var(--whois-accent)]"
 													onclick={downloadColors}
 												>
-													<DownloadIcon size={10} />
+													<Paintbrush size={10} />
 													Export CSS
 												</button>
 											</div>
