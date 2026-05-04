@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import type { SiteReport, TechStack, SocialLink, RedFlag, Subdomain, AssetNode } from '../types';
-import { fetchDNS, fetchSSL, analyzeHeaders, fetchIPInfo } from './scanner/network';
+import { fetchDNS, fetchSSL, analyzeHeaders, fetchIPInfo, analyzeCSP } from './scanner/network';
 import { analyzeHtml } from '../scanner/analysis';
 import { techRules, wafRules } from '../scanner/rules';
 import { env } from '$env/dynamic/private';
@@ -165,6 +165,9 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
     fetchSSL(domain).catch(() => undefined),
     analyzeHeaders(response.headers)
   ]);
+
+  const cspHeader = response.headers.get('content-security-policy');
+  const cspReport = analyzeCSP(cspHeader);
 
   // Resolve IP Info from the first A record
   let firstA = dnsRecords.find(r => r.type === 'A')?.value;
@@ -502,6 +505,7 @@ export async function scanUrl(targetUrl: string): Promise<SiteReport> {
       h3: $('h3').length
     },
     waf: Array.from(detectedWAFs),
+    csp: cspReport,
     assets: buildAssetTree($, finalUrl),
     updatedAt: new Date().toISOString()
   };
