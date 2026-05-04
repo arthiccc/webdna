@@ -104,5 +104,6 @@ export interface SiteReport {
     h2: number;
     h3: number;
   };
+  waf?: string[];
   updatedAt: string;
 }
